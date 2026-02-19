@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" I ", "ICI", " I "],
+  "key": {
+    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
+    "C": { "item": "minecraft:redstone_torch" }
+  },
+  "result": { "item": "apparati:head_redstone_antennae" }
+}

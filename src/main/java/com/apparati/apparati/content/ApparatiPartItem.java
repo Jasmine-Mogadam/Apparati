@@ -39,8 +39,25 @@ public class ApparatiPartItem extends Item {
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
         tooltip.add("Part Type: " + partType.name());
         tooltip.add("Stat Modifier: " + getStatModifier(stack));
-        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("Material")) {
-            tooltip.add("Material: " + stack.getTagCompound().getString("Material"));
+        if (stack.hasTagCompound()) {
+            if (stack.getTagCompound().hasKey("Material")) {
+                tooltip.add("Material: " + stack.getTagCompound().getString("Material"));
+            }
+            if (stack.getTagCompound().hasKey("Description")) {
+                tooltip.add("Description: " + stack.getTagCompound().getString("Description"));
+            }
+        }
+    }
+
+    @Override
+    public void onCreated(ItemStack stack, World worldIn, net.minecraft.entity.player.EntityPlayer playerIn) {
+        // Materials are stored in NBT and will be used for entity textures later.
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new net.minecraft.nbt.NBTTagCompound());
+        }
+        if (!stack.getTagCompound().hasKey("Material")) {
+            // Defaulting to "iron" as it's the primary crafting component in recipes.
+            stack.getTagCompound().setString("Material", "iron");
         }
     }
 

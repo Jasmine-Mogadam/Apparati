@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["III", "ICI", "III"],
+  "key": {
+    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
+    "C": { "item": "minecraft:compass" }
+  },
+  "result": { "item": "apparati:head_camera_lens" }
+}

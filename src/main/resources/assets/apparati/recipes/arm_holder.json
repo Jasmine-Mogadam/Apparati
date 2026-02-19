@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" I ", " I ", " I "],
+  "key": {
+    "I": { "type": "forge:ore_dict", "ore": "ingotIron" }
+  },
+  "result": { "item": "apparati:arm_holder" }
+}

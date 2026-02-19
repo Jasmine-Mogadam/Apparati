@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" I ", "IPI", " I "],
+  "key": {
+    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
+    "P": { "item": "minecraft:piston" }
+  },
+  "result": { "item": "apparati:arm_placer" }
+}

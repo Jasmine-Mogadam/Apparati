@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" I ", "IPI", " I "],
+  "key": {
+    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
+    "P": { "item": "minecraft:iron_bars" }
+  },
+  "result": { "item": "apparati:treads_wheelie" }
+}

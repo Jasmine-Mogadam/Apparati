@@ -16,9 +16,13 @@ public class ApparatiMod {
      *     Take a look at how many FMLStateEvents you can listen to via the @Mod.EventHandler annotation here
      * </a>
      */
+    @Mod.Instance(Constants.MOD_ID)
+    public static ApparatiMod instance;
+
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("Hello From {}!", Tags.MOD_NAME);
+        net.minecraftforge.fml.common.network.NetworkRegistry.INSTANCE.registerGuiHandler(this, new com.apparati.apparati.content.GuiHandler());
     }
 
 }

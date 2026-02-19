@@ -15,6 +15,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -31,11 +32,21 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
     private final AnimationFactory factory = new AnimationFactory(this);
 
     // Data Parameters for Parts (Storing ID corresponding to PartType ordinal)
-    private static final DataParameter<Integer> HEAD_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> ARM_LEFT_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> ARM_RIGHT_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> CHASSIS_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> TREADS_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
+    public static final DataParameter<Integer> HEAD_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
+    public static final DataParameter<Integer> ARM_LEFT_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
+    public static final DataParameter<Integer> ARM_RIGHT_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
+    public static final DataParameter<Integer> CHASSIS_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
+    public static final DataParameter<Integer> TREADS_TYPE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.VARINT);
+
+    // Data Parameters for Materials
+    public static final DataParameter<String> HEAD_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
+    public static final DataParameter<String> ARM_LEFT_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
+    public static final DataParameter<String> ARM_RIGHT_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
+    public static final DataParameter<String> CHASSIS_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
+    public static final DataParameter<String> TREADS_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
+
+    // Valid materials for randomization
+    private static final String[] VALID_MATERIALS = {"iron", "gold", "copper", "lead", "silver"};
 
     // Internal Inventory for "Core" and "Storage"
     private final InventoryBasic inventory;
@@ -62,6 +73,12 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         this.dataManager.register(ARM_RIGHT_TYPE, 0);
         this.dataManager.register(CHASSIS_TYPE, 0);
         this.dataManager.register(TREADS_TYPE, 0);
+
+        this.dataManager.register(HEAD_MATERIAL, "iron");
+        this.dataManager.register(ARM_LEFT_MATERIAL, "iron");
+        this.dataManager.register(ARM_RIGHT_MATERIAL, "iron");
+        this.dataManager.register(CHASSIS_MATERIAL, "iron");
+        this.dataManager.register(TREADS_MATERIAL, "iron");
     }
 
     @Override
@@ -237,10 +254,10 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
     // GeckoLib Implementation
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
         if (event.isMoving()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.apparati.walk", true));
-            return PlayState.CONTINUE;
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("walk", true));
+        } else {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", true));
         }
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.apparati.idle", true));
         return PlayState.CONTINUE;
     }
 
@@ -254,6 +271,36 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         return this.factory;
     }
 
+    @Nullable
+    @Override
+    public net.minecraft.entity.IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, @Nullable net.minecraft.entity.IEntityLivingData livingdata) {
+        livingdata = super.onInitialSpawn(difficulty, livingdata);
+
+        // Randomize Parts
+        this.dataManager.set(HEAD_TYPE, getRandomPart(ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE, ApparatiPartItem.PartType.HEAD_CAMERA_LENS, ApparatiPartItem.PartType.HEAD_MICROPHONE));
+        this.dataManager.set(ARM_LEFT_TYPE, getRandomPart(ApparatiPartItem.PartType.ARM_HOLDER, ApparatiPartItem.PartType.ARM_PLACER));
+        this.dataManager.set(ARM_RIGHT_TYPE, getRandomPart(ApparatiPartItem.PartType.ARM_HOLDER, ApparatiPartItem.PartType.ARM_PLACER));
+        this.dataManager.set(CHASSIS_TYPE, getRandomPart(ApparatiPartItem.PartType.CHASSIS_HOLLOW, ApparatiPartItem.PartType.CHASSIS_CHEST, ApparatiPartItem.PartType.CHASSIS_SOLID));
+        this.dataManager.set(TREADS_TYPE, ApparatiPartItem.PartType.TREADS_WHEELIE.ordinal());
+
+        // Randomize Materials
+        this.dataManager.set(HEAD_MATERIAL, getRandomMaterial());
+        this.dataManager.set(ARM_LEFT_MATERIAL, getRandomMaterial());
+        this.dataManager.set(ARM_RIGHT_MATERIAL, getRandomMaterial());
+        this.dataManager.set(CHASSIS_MATERIAL, getRandomMaterial());
+        this.dataManager.set(TREADS_MATERIAL, getRandomMaterial());
+
+        return livingdata;
+    }
+
+    private int getRandomPart(ApparatiPartItem.PartType... types) {
+        return types[this.rand.nextInt(types.length)].ordinal();
+    }
+
+    private String getRandomMaterial() {
+        return VALID_MATERIALS[this.rand.nextInt(VALID_MATERIALS.length)];
+    }
+
     // NBT Read/Write
     @Override
     public void writeEntityToNBT(NBTTagCompound compound) {
@@ -263,6 +310,12 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         compound.setInteger("ArmRightType", this.dataManager.get(ARM_RIGHT_TYPE));
         compound.setInteger("ChassisType", this.dataManager.get(CHASSIS_TYPE));
         compound.setInteger("TreadsType", this.dataManager.get(TREADS_TYPE));
+
+        compound.setString("HeadMaterial", this.dataManager.get(HEAD_MATERIAL));
+        compound.setString("ArmLeftMaterial", this.dataManager.get(ARM_LEFT_MATERIAL));
+        compound.setString("ArmRightMaterial", this.dataManager.get(ARM_RIGHT_MATERIAL));
+        compound.setString("ChassisMaterial", this.dataManager.get(CHASSIS_MATERIAL));
+        compound.setString("TreadsMaterial", this.dataManager.get(TREADS_MATERIAL));
     }
 
     @Override
@@ -273,5 +326,11 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         this.dataManager.set(ARM_RIGHT_TYPE, compound.getInteger("ArmRightType"));
         this.dataManager.set(CHASSIS_TYPE, compound.getInteger("ChassisType"));
         this.dataManager.set(TREADS_TYPE, compound.getInteger("TreadsType"));
+
+        if (compound.hasKey("HeadMaterial")) this.dataManager.set(HEAD_MATERIAL, compound.getString("HeadMaterial"));
+        if (compound.hasKey("ArmLeftMaterial")) this.dataManager.set(ARM_LEFT_MATERIAL, compound.getString("ArmLeftMaterial"));
+        if (compound.hasKey("ArmRightMaterial")) this.dataManager.set(ARM_RIGHT_MATERIAL, compound.getString("ArmRightMaterial"));
+        if (compound.hasKey("ChassisMaterial")) this.dataManager.set(CHASSIS_MATERIAL, compound.getString("ChassisMaterial"));
+        if (compound.hasKey("TreadsMaterial")) this.dataManager.set(TREADS_MATERIAL, compound.getString("TreadsMaterial"));
     }
 }

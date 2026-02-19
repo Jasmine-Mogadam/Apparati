@@ -62,15 +62,25 @@ public class ApparatiPartItem extends Item {
     }
 
     public enum PartType {
-        HEAD_REDSTONE_ANTENNAE,
-        HEAD_CAMERA_LENS,
-        HEAD_MICROPHONE,
-        ARM_HOLDER,
-        ARM_PLACER,
-        CHASSIS_HOLLOW,
-        CHASSIS_CHEST,
-        CHASSIS_SOLID,
-        TREADS_WHEELIE,
-        CORE
+        HEAD_REDSTONE_ANTENNAE("antennae", "flare"),
+        HEAD_CAMERA_LENS("camera", "lid"),
+        HEAD_MICROPHONE("microphone", "waffle rings"),
+        ARM_HOLDER("holder_left", "holder_right"),
+        ARM_PLACER("placer_left", "placer_right"),
+        CHASSIS_HOLLOW("hollow"),
+        CHASSIS_CHEST("chest"),
+        CHASSIS_SOLID("solid"),
+        TREADS_WHEELIE("wheelie"),
+        CORE;
+
+        private final String[] bones;
+
+        PartType(String... bones) {
+            this.bones = bones;
+        }
+
+        public String[] getBones() {
+            return bones;
+        }
     }
 }

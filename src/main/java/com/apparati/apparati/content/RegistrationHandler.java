@@ -29,7 +29,7 @@ public class RegistrationHandler {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerModels(RegistryEvent.Register<net.minecraft.block.Block> event) {
-        // RenderingRegistry is usually called in preInit, but we can do it here too or via a client-only subscriber
+        RenderingRegistry.registerEntityRenderingHandler(ApparatiEntity.class, ApparatiRenderer::new);
     }
 
     @SubscribeEvent
@@ -41,7 +41,7 @@ public class RegistrationHandler {
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<net.minecraft.item.Item> event) {
         net.minecraft.block.Block assembler = net.minecraftforge.fml.common.registry.ForgeRegistries.BLOCKS.getValue(new ResourceLocation(Constants.MOD_ID, "apparati_assembler"));
-        event.getRegistry().register(new net.minecraft.item.ItemBlock(assembler).setRegistryName("apparati_assembler"));
+        event.getRegistry().register(new net.minecraft.item.ItemBlock(assembler).setRegistryName("apparati_assembler").setCreativeTab(net.minecraft.creativetab.CreativeTabs.DECORATIONS));
         
         event.getRegistry().register(new ApparatiPartItem("core", ApparatiPartItem.PartType.CORE, 0).setCreativeTab(net.minecraft.creativetab.CreativeTabs.MISC));
         event.getRegistry().register(new ApparatiPartItem("head_redstone_antennae", ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE, 1).setCreativeTab(net.minecraft.creativetab.CreativeTabs.MISC));

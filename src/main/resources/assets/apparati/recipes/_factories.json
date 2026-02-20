@@ -1,0 +1,5 @@
+{
+  "recipes": {
+    "assembler_shaped": "com.apparati.apparati.content.AssemblerShapedRecipe$Factory"
+  }
+}

@@ -30,6 +30,8 @@ public class RegistrationHandler {
     @SubscribeEvent
     public static void registerModels(RegistryEvent.Register<net.minecraft.block.Block> event) {
         RenderingRegistry.registerEntityRenderingHandler(ApparatiEntity.class, ApparatiRenderer::new);
+        // Ensure the part item renderer is initialized
+        com.apparati.apparati.content.client.ApparatiPartItemRenderer.INSTANCE.getClass();
     }
 
     @SubscribeEvent

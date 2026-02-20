@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [" I ", "ICI", " I "],
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": ["BCB", "B B", "BBB"],
   "key": {
-    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
-    "C": { "item": "minecraft:chest" }
+    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "C": { "type": "forge:ore_dict", "ore": "chest" }
   },
   "result": { "item": "apparati:chassis_chest" }
 }

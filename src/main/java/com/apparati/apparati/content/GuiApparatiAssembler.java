@@ -11,7 +11,7 @@ import org.lwjgl.input.Keyboard;
 import java.io.IOException;
 
 public class GuiApparatiAssembler extends GuiContainer {
-    private static final ResourceLocation BG_TEXTURE = new ResourceLocation(Constants.MOD_ID, "textures/gui/assembler.png");
+    private static final ResourceLocation BG_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
     private final TileEntityApparatiAssembler te;
     private GuiTextField programmingField;
 
@@ -99,7 +99,14 @@ public class GuiApparatiAssembler extends GuiContainer {
         this.mc.getTextureManager().bindTexture(BG_TEXTURE);
         int i = (this.width - this.xSize) / 2;
         int j = (this.height - this.ySize) / 2;
-        this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+        
+        if (te.getActiveTab() == 0) {
+            this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+        } else {
+            // Use a fallback or custom background for other tabs if they don't fit the crafting table texture
+            // For now, still using the crafting table base but maybe we want to keep some elements.
+            this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+        }
         
         if (te.getActiveTab() == 2) {
             this.programmingField.drawTextBox();

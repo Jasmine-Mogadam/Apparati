@@ -1,4 +1,5 @@
 ## TemplateDevEnv
+
 _For Kotlin see [TemplateDevEnvKt](https://github.com/CleanroomMC/TemplateDevEnvKt)_
 
 Template workspace for modding Minecraft 1.12.2. Licensed under MIT, it is made for public use.
@@ -16,6 +17,11 @@ With **coremod and mixin support** that is easy to configure.
 5. Run gradle tasks such as `runClient` and `runServer` in the IDEA gradle tab, or use the auto-imported run configurations like `1. Run Client`.
 
 ### Notes:
+
+- **Multiple Java Versions**: If you have multiple Java versions installed and need to use a specific one for this project (e.g. Java 25), you can create a `.env` file in the project root:
+  1. Copy `.env.example` to `.env`.
+  2. Set `JAVA_HOME` to your specific Java installation path.
+  3. The `gradlew` script and `build.gradle` will automatically use this path.
 - Dependencies script in [gradle/scripts/dependencies.gradle](gradle/scripts/dependencies.gradle), explanations are commented in the file.
 - Publishing script in [gradle/scripts/publishing.gradle](gradle/scripts/publishing.gradle).
 - When writing Mixins on IntelliJ, it is advisable to use latest [MinecraftDev Fork for RetroFuturaGradle](https://github.com/eigenraven/MinecraftDev/releases).

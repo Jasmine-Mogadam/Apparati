@@ -10,13 +10,27 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.3'
-    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.2'
+    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.1'
     id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
     id 'com.modrinth.minotaur' version '2.+' apply false
     id 'org.jetbrains.changelog' version '2.5.0'
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
+
+def envFile = file('.env')
+if (envFile.exists()) {
+    envFile.eachLine { line ->
+        def (key, value) = line.tokenize('=')
+        if (key && value) {
+            if (key == 'JAVA_HOME') {
+                project.extensions.extraProperties.set('org.gradle.java.home', value)
+            } else {
+                project.extensions.extraProperties.set(key, value)
+            }
+        }
+    }
+}
 
 // Early Assertions
 assertProperty 'mod_version'

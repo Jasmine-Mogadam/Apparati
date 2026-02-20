@@ -4,7 +4,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
+import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -25,10 +29,30 @@ public class ContainerApparatiAssembler extends Container {
         if (tab == 0) { // Crafting
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
-                    this.addSlotToContainer(new SlotItemHandler(te.craftingInv, j + i * 3, 30 + j * 18, 17 + i * 18));
+                    this.addSlotToContainer(new SlotItemHandler(te.craftingInv, j + i * 3, 30 + j * 18, 17 + i * 18) {
+                        @Override
+                        public void onSlotChanged() {
+                            super.onSlotChanged();
+                            onCraftMatrixChanged();
+                        }
+                    });
                 }
             }
-            this.addSlotToContainer(new SlotItemHandler(te.craftingResult, 0, 124, 35));
+            this.addSlotToContainer(new SlotItemHandler(te.craftingResult, 0, 124, 35) {
+                @Override
+                public boolean isItemValid(ItemStack stack) {
+                    return false;
+                }
+
+                @Override
+                public ItemStack onTake(EntityPlayer playerIn, ItemStack stack) {
+                    for (int i = 0; i < te.craftingInv.getSlots(); i++) {
+                        te.craftingInv.extractItem(i, 1, false);
+                    }
+                    return super.onTake(playerIn, stack);
+                }
+            });
+            onCraftMatrixChanged();
         } else if (tab == 1) { // Assembly
             // Cross pattern: 5 slots
             // top: head sensor (0), middle: chassis (1), bottom: treads (2), left: arm (3), right: arm (4)
@@ -69,6 +93,24 @@ public class ContainerApparatiAssembler extends Container {
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
         // Basic shift-click implementation
         return ItemStack.EMPTY;
+    }
+
+    public void onCraftMatrixChanged() {
+        InventoryCrafting craftMatrix = new InventoryCrafting(this, 3, 3);
+        for (int i = 0; i < 9; i++) {
+            craftMatrix.setInventorySlotContents(i, te.craftingInv.getStackInSlot(i));
+        }
+
+        ItemStack result = ItemStack.EMPTY;
+        for (IRecipe recipe : CraftingManager.REGISTRY) {
+            ResourceLocation registryName = recipe.getRegistryName();
+            if (registryName != null && registryName.getResourceDomain().equals("apparati") && recipe.matches(craftMatrix, te.getWorld())) {
+                result = recipe.getCraftingResult(craftMatrix);
+                break;
+            }
+        }
+        
+        te.craftingResult.setStackInSlot(0, result);
     }
 
     private static class PartSlot extends SlotItemHandler {

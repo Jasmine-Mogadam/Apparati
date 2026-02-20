@@ -1,5 +1,21 @@
 #!/bin/sh
 
+# Load .env file if it exists
+if [ -f .env ]; then
+  # Read .env file line by line
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Skip comments and empty lines
+    case "$line" in
+      \#*|'') continue ;;
+    esac
+    # Extract key and value
+    key=$(echo "$line" | cut -d '=' -f 1)
+    value=$(echo "$line" | cut -d '=' -f 2-)
+    # Export the variable
+    export "$key=$value"
+  done < .env
+fi
+
 #
 # Copyright © 2015-2021 the original authors.
 #

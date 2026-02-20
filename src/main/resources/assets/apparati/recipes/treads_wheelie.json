@@ -1,9 +1,15 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [" I ", "IPI", " I "],
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": [" B ", "BIB", " B "],
   "key": {
-    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
-    "P": { "item": "minecraft:iron_bars" }
+    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "I": [
+      { "type": "forge:ore_dict", "ore": "wool" },
+      { "item": "minecraft:string" },
+      { "item": "minecraft:dried_kelp" },
+      { "type": "forge:ore_dict", "ore": "rubber" }
+    ]
   },
   "result": { "item": "apparati:treads_wheelie" }
 }

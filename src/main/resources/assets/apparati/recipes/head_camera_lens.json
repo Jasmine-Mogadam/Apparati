@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": ["III", "ICI", "III"],
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": [" B ", " G ", " B "],
   "key": {
-    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
-    "C": { "item": "minecraft:compass" }
+    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "G": { "item": "minecraft:glass" }
   },
   "result": { "item": "apparati:head_camera_lens" }
 }

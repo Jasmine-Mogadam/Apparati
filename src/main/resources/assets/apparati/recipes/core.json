@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [" R ", "RCR", " R "],
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": ["BBB", "BRB", "BBB"],
   "key": {
-    "R": { "item": "minecraft:redstone" },
-    "C": { "item": "minecraft:comparator" }
+    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "R": { "item": "minecraft:redstone_torch" }
   },
   "result": { "item": "apparati:core" }
 }

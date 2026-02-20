@@ -20,6 +20,7 @@ public class ApparatiPartItem extends Item {
         this.partType = partType;
         this.defaultStatModifier = defaultStatModifier;
         // this.setCreativeTab(CreativeTabs.MISC); // TODO: Set creative tab
+        this.setTileEntityItemStackRenderer(com.apparati.apparati.content.client.ApparatiPartItemRenderer.INSTANCE);
     }
 
     public PartType getPartType() {

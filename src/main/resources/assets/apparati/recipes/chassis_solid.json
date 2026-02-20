@@ -1,8 +1,9 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": ["III", "III", "III"],
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": ["BBB", "BBB", "BBB"],
   "key": {
-    "I": { "type": "forge:ore_dict", "ore": "ingotIron" }
+    "B": { "type": "forge:ore_dict", "ore": "block" }
   },
   "result": { "item": "apparati:chassis_solid" }
 }

@@ -8,16 +8,25 @@ import software.bernie.geckolib3.core.processor.IBone;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
 import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
-import java.util.List;
+import javax.annotation.Nullable;
 
 public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
+    private ApparatiPartItem.PartType currentPart = null;
+
+    public void setCurrentPart(ApparatiPartItem.PartType partType) {
+        this.currentPart = partType;
+    }
+
     @Override
     public ResourceLocation getModelLocation(ApparatiEntity object) {
         return new ResourceLocation("apparati", "geo/apparati.geo.json");
     }
 
     @Override
-    public ResourceLocation getTextureLocation(ApparatiEntity object) {
+    public ResourceLocation getTextureLocation(@Nullable ApparatiEntity object) {
+        if (object == null) {
+            return new ResourceLocation("apparati", "textures/entity/apparati.png");
+        }
         // Return texture based on entity material if possible
         // We use the chassis material as the primary material for the texture selection
         String material = object.getDataManager().get(ApparatiEntity.CHASSIS_MATERIAL);
@@ -38,9 +47,21 @@ public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
 
         // Hide all part-specific bones first
         for (ApparatiPartItem.PartType type : ApparatiPartItem.PartType.values()) {
-            for (String boneName : type.getBones()) {
-                setBoneVisible(boneName, false);
+            if (type.getBones() != null) {
+                for (String boneName : type.getBones()) {
+                    setBoneVisible(boneName, false);
+                }
             }
+        }
+
+        if (entity == null) {
+            // Item rendering context
+            if (currentPart != null && currentPart.getBones() != null) {
+                for (String boneName : currentPart.getBones()) {
+                    setBoneVisible(boneName, true);
+                }
+            }
+            return;
         }
 
         // Show bones for the current parts
@@ -69,17 +90,21 @@ public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
     private void showBonesFor(int partTypeIndex) {
         if (partTypeIndex < 0 || partTypeIndex >= ApparatiPartItem.PartType.values().length) return;
         ApparatiPartItem.PartType type = ApparatiPartItem.PartType.values()[partTypeIndex];
-        for (String boneName : type.getBones()) {
-            setBoneVisible(boneName, true);
+        if (type.getBones() != null) {
+            for (String boneName : type.getBones()) {
+                setBoneVisible(boneName, true);
+            }
         }
     }
 
     private void showArmBones(int partTypeIndex, String sideSuffix) {
         if (partTypeIndex < 0 || partTypeIndex >= ApparatiPartItem.PartType.values().length) return;
         ApparatiPartItem.PartType type = ApparatiPartItem.PartType.values()[partTypeIndex];
-        for (String boneName : type.getBones()) {
-            if (boneName.endsWith(sideSuffix)) {
-                setBoneVisible(boneName, true);
+        if (type.getBones() != null) {
+            for (String boneName : type.getBones()) {
+                if (boneName.endsWith(sideSuffix)) {
+                    setBoneVisible(boneName, true);
+                }
             }
         }
     }

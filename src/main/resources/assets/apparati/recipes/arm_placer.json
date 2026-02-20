@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [" I ", "IPI", " I "],
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": ["  B", " D ", "B  "],
   "key": {
-    "I": { "type": "forge:ore_dict", "ore": "ingotIron" },
-    "P": { "item": "minecraft:piston" }
+    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "D": { "item": "minecraft:dispenser" }
   },
   "result": { "item": "apparati:arm_placer" }
 }

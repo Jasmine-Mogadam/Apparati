@@ -53,7 +53,7 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
 
     public ApparatiEntity(World worldIn) {
         super(worldIn);
-        this.setSize(0.6F, 1.95F); // Standard biped size
+        this.setSize(0.6F, 1.0F);
         this.inventory = new InventoryBasic("ApparatiInventory", false, 27); // Standard chest size
     }
 
@@ -92,7 +92,10 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
     public void onUpdate() {
         super.onUpdate();
         if (!this.world.isRemote) {
-            tickSensors();
+            // Only tick sensors every 20 ticks (1 second) to save performance
+            if (this.ticksExisted % 20 == 0) {
+                tickSensors();
+            }
             tickArms();
             tickChassisStats();
         }
@@ -106,16 +109,20 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
 
         switch (head) {
             case HEAD_REDSTONE_ANTENNAE:
-                // Core has access to all redstone signals in X blocks (e.g., 5 blocks)
+                // Check for redstone signals nearby
+                // Scanning a 5x5x5 area is expensive, so we limit it to run infrequently (see onUpdate)
                 int radius = 5;
                 boolean powered = false;
                 BlockPos pos = this.getPosition();
+                
+                // Optimized loop with break label
+                searchLoop:
                 for (int x = -radius; x <= radius; x++) {
                     for (int y = -radius; y <= radius; y++) {
                         for (int z = -radius; z <= radius; z++) {
                             if (this.world.isBlockPowered(pos.add(x, y, z))) {
                                 powered = true;
-                                break;
+                                break searchLoop;
                             }
                         }
                     }

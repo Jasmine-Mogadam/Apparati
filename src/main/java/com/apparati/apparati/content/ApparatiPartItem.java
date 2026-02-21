@@ -19,8 +19,7 @@ public class ApparatiPartItem extends Item {
         this.setUnlocalizedName(name);
         this.partType = partType;
         this.defaultStatModifier = defaultStatModifier;
-        // this.setCreativeTab(CreativeTabs.MISC); // TODO: Set creative tab
-        this.setTileEntityItemStackRenderer(com.apparati.apparati.content.client.ApparatiPartItemRenderer.INSTANCE);
+        this.setCreativeTab(net.minecraft.creativetab.CreativeTabs.MISC);
     }
 
     public PartType getPartType() {
@@ -62,22 +61,36 @@ public class ApparatiPartItem extends Item {
         }
     }
 
-    public enum PartType {
-        HEAD_REDSTONE_ANTENNAE("antennae", "flare"),
-        HEAD_CAMERA_LENS("camera", "lid"),
-        HEAD_MICROPHONE("microphone", "waffle rings"),
-        ARM_HOLDER("holder_left", "holder_right"),
-        ARM_PLACER("placer_left", "placer_right"),
-        CHASSIS_HOLLOW("hollow"),
-        CHASSIS_CHEST("chest"),
-        CHASSIS_SOLID("solid"),
-        TREADS_WHEELIE("wheelie"),
-        CORE;
+    public enum PartCategory {
+        HEAD,
+        ARM,
+        CHASSIS,
+        TREADS,
+        CORE
+    }
 
+    public enum PartType {
+        HEAD_REDSTONE_ANTENNAE(PartCategory.HEAD, "antennae", "flare"),
+        HEAD_CAMERA_LENS(PartCategory.HEAD, "camera", "lid"),
+        HEAD_MICROPHONE(PartCategory.HEAD, "microphone", "waffle rings"),
+        ARM_HOLDER(PartCategory.ARM, "holder_left", "holder_right"),
+        ARM_PLACER(PartCategory.ARM, "placer_left", "placer_right"),
+        CHASSIS_HOLLOW(PartCategory.CHASSIS, "hollow"),
+        CHASSIS_CHEST(PartCategory.CHASSIS, "chest"),
+        CHASSIS_SOLID(PartCategory.CHASSIS, "solid"),
+        TREADS_WHEELIE(PartCategory.TREADS, "wheelie"),
+        CORE(PartCategory.CORE);
+
+        private final PartCategory category;
         private final String[] bones;
 
-        PartType(String... bones) {
+        PartType(PartCategory category, String... bones) {
+            this.category = category;
             this.bones = bones;
+        }
+
+        public PartCategory getCategory() {
+            return category;
         }
 
         public String[] getBones() {

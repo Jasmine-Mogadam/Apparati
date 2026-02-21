@@ -11,12 +11,6 @@ import software.bernie.geckolib3.model.provider.data.EntityModelData;
 import javax.annotation.Nullable;
 
 public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
-    private ApparatiPartItem.PartType currentPart = null;
-
-    public void setCurrentPart(ApparatiPartItem.PartType partType) {
-        this.currentPart = partType;
-    }
-
     @Override
     public ResourceLocation getModelLocation(ApparatiEntity object) {
         return new ResourceLocation("apparati", "geo/apparati.geo.json");
@@ -24,16 +18,8 @@ public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(@Nullable ApparatiEntity object) {
-        if (object == null) {
-            return new ResourceLocation("apparati", "textures/entity/apparati.png");
-        }
-        // Return texture based on entity material if possible
-        // We use the chassis material as the primary material for the texture selection
-        String material = object.getDataManager().get(ApparatiEntity.CHASSIS_MATERIAL);
-        if (material == null || material.isEmpty() || material.equals("iron")) {
-            return new ResourceLocation("apparati", "textures/entity/apparati.png");
-        }
-        return new ResourceLocation("apparati", "textures/entity/apparati_" + material + ".png");
+        // Return the block texture map as we will be using sprites
+        return net.minecraft.client.renderer.texture.TextureMap.LOCATION_BLOCKS_TEXTURE;
     }
 
     @Override
@@ -52,16 +38,6 @@ public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
                     setBoneVisible(boneName, false);
                 }
             }
-        }
-
-        if (entity == null) {
-            // Item rendering context
-            if (currentPart != null && currentPart.getBones() != null) {
-                for (String boneName : currentPart.getBones()) {
-                    setBoneVisible(boneName, true);
-                }
-            }
-            return;
         }
 
         // Show bones for the current parts

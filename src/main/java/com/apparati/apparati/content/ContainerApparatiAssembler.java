@@ -18,52 +18,55 @@ public class ContainerApparatiAssembler extends Container {
     public ContainerApparatiAssembler(InventoryPlayer playerInv, TileEntityApparatiAssembler te) {
         this.te = te;
         
+        setupSlots();
         addPlayerSlots(playerInv);
-        setupTabs();
     }
 
-    private void setupTabs() {
-        this.inventorySlots.removeIf(s -> !(s.inventory instanceof InventoryPlayer));
+    private void setupSlots() {
+        // We add ALL slots to the container once to keep indices consistent.
+        // We will move slots off-screen (x = -1000) when their tab is not active.
+        int activeTab = te.getActiveTab();
 
-        int tab = te.getActiveTab();
-        if (tab == 0) { // Crafting
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    this.addSlotToContainer(new SlotItemHandler(te.craftingInv, j + i * 3, 30 + j * 18, 17 + i * 18) {
-                        @Override
-                        public void onSlotChanged() {
-                            super.onSlotChanged();
-                            onCraftMatrixChanged();
-                        }
-                    });
-                }
-            }
-            this.addSlotToContainer(new SlotItemHandler(te.craftingResult, 0, 124, 35) {
-                @Override
-                public boolean isItemValid(ItemStack stack) {
-                    return false;
-                }
-
-                @Override
-                public ItemStack onTake(EntityPlayer playerIn, ItemStack stack) {
-                    for (int i = 0; i < te.craftingInv.getSlots(); i++) {
-                        te.craftingInv.extractItem(i, 1, false);
+        // Crafting Slots: 0-8
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                final int slotIdx = j + i * 3;
+                this.addSlotToContainer(new SlotItemHandler(te.craftingInv, slotIdx, activeTab == 0 ? 30 + j * 18 : -1000, 17 + i * 18) {
+                    @Override
+                    public void onSlotChanged() {
+                        super.onSlotChanged();
+                        onCraftMatrixChanged();
                     }
-                    return super.onTake(playerIn, stack);
-                }
-            });
-            onCraftMatrixChanged();
-        } else if (tab == 1) { // Assembly
-            // Cross pattern: 5 slots
-            // top: head sensor (0), middle: chassis (1), bottom: treads (2), left: arm (3), right: arm (4)
-            this.addSlotToContainer(new PartSlot(te.assemblyInv, 0, 80, 17, ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE)); // Simplified check
-            this.addSlotToContainer(new PartSlot(te.assemblyInv, 1, 80, 35, ApparatiPartItem.PartType.CHASSIS_HOLLOW));
-            this.addSlotToContainer(new PartSlot(te.assemblyInv, 2, 80, 53, ApparatiPartItem.PartType.TREADS_WHEELIE));
-            this.addSlotToContainer(new PartSlot(te.assemblyInv, 3, 62, 35, ApparatiPartItem.PartType.ARM_HOLDER));
-            this.addSlotToContainer(new PartSlot(te.assemblyInv, 4, 98, 35, ApparatiPartItem.PartType.ARM_HOLDER));
-        } else if (tab == 2) { // Programming
-            this.addSlotToContainer(new PartSlot(te.programmingInv, 0, 80, 35, ApparatiPartItem.PartType.CORE));
+                });
+            }
         }
+        // Crafting Result: 9
+        this.addSlotToContainer(new SlotItemHandler(te.craftingResult, 0, activeTab == 0 ? 124 : -1000, 35) {
+            @Override
+            public boolean isItemValid(ItemStack stack) {
+                return false;
+            }
+
+            @Override
+            public ItemStack onTake(EntityPlayer playerIn, ItemStack stack) {
+                for (int i = 0; i < te.craftingInv.getSlots(); i++) {
+                    te.craftingInv.extractItem(i, 1, false);
+                }
+                return super.onTake(playerIn, stack);
+            }
+        });
+
+        // Assembly Slots: 10-14
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 0, activeTab == 1 ? 80 : -1000, 17, ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 1, activeTab == 1 ? 80 : -1000, 35, ApparatiPartItem.PartType.CHASSIS_HOLLOW));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 2, activeTab == 1 ? 80 : -1000, 53, ApparatiPartItem.PartType.TREADS_WHEELIE));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 3, activeTab == 1 ? 62 : -1000, 35, ApparatiPartItem.PartType.ARM_HOLDER));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 4, activeTab == 1 ? 98 : -1000, 35, ApparatiPartItem.PartType.ARM_HOLDER));
+
+        // Programming Slot: 15
+        this.addSlotToContainer(new PartSlot(te.programmingInv, 0, activeTab == 2 ? 80 : -1000, 35, ApparatiPartItem.PartType.CORE));
+        
+        if (activeTab == 0) onCraftMatrixChanged();
     }
 
     public void updateSlots() {
@@ -96,17 +99,21 @@ public class ContainerApparatiAssembler extends Container {
     }
 
     public void onCraftMatrixChanged() {
+        if (te.getWorld() == null) return;
+        
         InventoryCrafting craftMatrix = new InventoryCrafting(this, 3, 3);
         for (int i = 0; i < 9; i++) {
             craftMatrix.setInventorySlotContents(i, te.craftingInv.getStackInSlot(i));
         }
 
         ItemStack result = ItemStack.EMPTY;
-        for (IRecipe recipe : CraftingManager.REGISTRY) {
-            ResourceLocation registryName = recipe.getRegistryName();
-            if (registryName != null && registryName.getResourceDomain().equals("apparati") && recipe.matches(craftMatrix, te.getWorld())) {
-                result = recipe.getCraftingResult(craftMatrix);
-                break;
+        for (IRecipe recipe : net.minecraftforge.fml.common.registry.ForgeRegistries.RECIPES) {
+            // Only allow our custom recipes in this assembler
+            if (recipe instanceof AssemblerShapedRecipe) {
+                if (recipe.matches(craftMatrix, te.getWorld())) {
+                    result = recipe.getCraftingResult(craftMatrix);
+                    break;
+                }
             }
         }
         

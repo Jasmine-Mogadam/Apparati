@@ -7,7 +7,7 @@
     "I": [
       { "type": "forge:ore_dict", "ore": "wool" },
       { "item": "minecraft:string" },
-      { "item": "minecraft:dried_kelp" },
+      { "type": "forge:ore_dict", "ore": "leather" },
       { "type": "forge:ore_dict", "ore": "rubber" }
     ]
   },

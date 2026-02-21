@@ -1,5 +1,5 @@
 {
-  "parent": "builtin/generated",
+  "parent": "builtin/entity",
   "display": {
     "thirdperson_hand": {
       "rotation": [0, 0, 0],

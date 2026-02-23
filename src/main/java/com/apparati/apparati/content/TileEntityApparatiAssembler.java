@@ -17,16 +17,39 @@ public class TileEntityApparatiAssembler extends TileEntity implements ITickable
     // 1: Assembly Tab (5 slots: Cross pattern)
     // 2: Programming Tab (1 slot)
     
-    public final ItemStackHandler assemblyInv = new ItemStackHandler(5);
-    public final ItemStackHandler programmingInv = new ItemStackHandler(1);
-    public final ItemStackHandler craftingInv = new ItemStackHandler(9); // Standard crafting grid
-    public final ItemStackHandler craftingResult = new ItemStackHandler(1);
+    public final ItemStackHandler assemblyInv = new ItemStackHandler(5) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            TileEntityApparatiAssembler.this.markDirty();
+        }
+    };
+    public final ItemStackHandler programmingInv = new ItemStackHandler(1) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            TileEntityApparatiAssembler.this.markDirty();
+        }
+    };
+    public final ItemStackHandler craftingInv = new ItemStackHandler(9) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            // We need to notify the tile entity that its contents have changed
+            // This will ensure proper synchronization between client and server
+            TileEntityApparatiAssembler.this.markDirty();
+        }
+    }; // Standard crafting grid
+    public final ItemStackHandler craftingResult = new ItemStackHandler(1) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            TileEntityApparatiAssembler.this.markDirty();
+        }
+    };
 
     private int activeTab = 0;
 
     @Override
     public void update() {
         // Animation logic handled by TESR using world time
+        // System.out.println("TileEntityApparatiAssembler: update() called on " + (world.isRemote ? "CLIENT" : "SERVER")); // Removed for now to avoid spamming, but useful for future debugging
     }
 
     public int getActiveTab() {

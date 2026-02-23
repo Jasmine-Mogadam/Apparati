@@ -45,35 +45,15 @@ public class ApparatiAssemblerRecipeWrapper implements IRecipeWrapper {
             inputs.add(new ArrayList<>());
         }
 
-        int blockOreId = OreDictionary.getOreID("block");
+        Ingredient placeholder = recipe.getPlaceholderIngredient();
 
         // The recipeIngredients list in ShapedRecipes is row-major and size width*height
         for (int i = 0; i < recipeIngredients.size(); i++) {
             Ingredient ingredient = recipeIngredients.get(i);
             if (ingredient == Ingredient.EMPTY) continue;
             
-            ItemStack[] matches = ingredient.getMatchingStacks();
-            if (matches.length == 0) continue;
-
             // Determine if this ingredient is the block placeholder
-            boolean isBlockPlaceholder = false;
-            for (ItemStack stack : matches) {
-                for (int id : OreDictionary.getOreIDs(stack)) {
-                    if (id == blockOreId) {
-                        isBlockPlaceholder = true;
-                        break;
-                    }
-                }
-                if (isBlockPlaceholder) break;
-                
-                if (stack.getItem() instanceof ItemBlock) {
-                    Block b = ((ItemBlock)stack.getItem()).getBlock();
-                    if (b.getRegistryName() != null && b.getRegistryName().toString().equals("minecraft:iron_block")) {
-                        isBlockPlaceholder = true;
-                        break;
-                    }
-                }
-            }
+            boolean isBlockPlaceholder = (placeholder != null && ingredient == placeholder);
 
             List<ItemStack> finalVariations;
             if (isBlockPlaceholder) {
@@ -85,6 +65,8 @@ public class ApparatiAssemblerRecipeWrapper implements IRecipeWrapper {
                     }
                 }
             } else {
+                ItemStack[] matches = ingredient.getMatchingStacks();
+                if (matches.length == 0) continue;
                 finalVariations = new ArrayList<>(Arrays.asList(matches));
             }
             

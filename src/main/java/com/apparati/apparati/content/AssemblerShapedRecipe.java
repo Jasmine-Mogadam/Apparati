@@ -30,10 +30,16 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
 
     private final ShapedRecipes recipe;
     private final char blockChar;
+    private final Ingredient placeholderIngredient;
 
-    public AssemblerShapedRecipe(ShapedRecipes recipe, char blockChar) {
+    public AssemblerShapedRecipe(ShapedRecipes recipe, char blockChar, Ingredient placeholderIngredient) {
         this.recipe = recipe;
         this.blockChar = blockChar;
+        this.placeholderIngredient = placeholderIngredient;
+    }
+
+    public Ingredient getPlaceholderIngredient() {
+        return placeholderIngredient;
     }
 
     public int getRecipeWidth() {
@@ -46,14 +52,17 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
 
     @Override
     public boolean matches(@Nonnull InventoryCrafting inv, @Nonnull World worldIn) {
-        // We implement a custom matching that allows ANY block for the placeholder slots
         int width = recipe.recipeWidth;
         int height = recipe.recipeHeight;
         
         for (int i = 0; i <= 3 - width; ++i) {
             for (int j = 0; j <= 3 - height; ++j) {
-                if (this.checkMatch(inv, i, j, true)) return true;
-                if (this.checkMatch(inv, i, j, false)) return true;
+                if (this.checkMatch(inv, i, j, true)) {
+                    return true;
+                }
+                if (this.checkMatch(inv, i, j, false)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -63,7 +72,6 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
         int width = recipe.recipeWidth;
         int height = recipe.recipeHeight;
         NonNullList<Ingredient> ingredients = recipe.getIngredients();
-        int blockOreId = OreDictionary.getOreID("block");
 
         for (int x = 0; x < 3; ++x) {
             for (int y = 0; y < 3; ++y) {
@@ -80,31 +88,10 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
                 }
 
                 ItemStack stack = inv.getStackInRowAndColumn(x, y);
-                
-                // Custom placeholder check
-                boolean isPlaceholder = false;
-                for (ItemStack match : target.getMatchingStacks()) {
-                    for (int id : OreDictionary.getOreIDs(match)) {
-                        if (id == blockOreId) {
-                            isPlaceholder = true;
-                            break;
-                        }
-                    }
-                    if (isPlaceholder) break;
-                }
 
-                if (isPlaceholder) {
-                    if (stack.isEmpty() || !(stack.getItem() instanceof ItemBlock)) return false;
-                    boolean matchesMaterial = false;
-                    for (int id : OreDictionary.getOreIDs(stack)) {
-                        if (id == blockOreId) {
-                            matchesMaterial = true;
-                            break;
-                        }
-                    }
-                    if (!matchesMaterial) return false;
-                } else {
-                    if (!target.apply(stack)) return false;
+                // Rely on Ingredient.apply() now that OreDictionary is reliably populated in ApparatiMod.postInit
+                if (!target.apply(stack)) {
+                    return false;
                 }
             }
         }
@@ -114,22 +101,15 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
     @Nonnull
     @Override
     public ItemStack getCraftingResult(@Nonnull InventoryCrafting inv) {
-        // System.out.println("CRITICAL_DEBUG RECIPE: Getting result for " + this.getRegistryName());
         ItemStack result = recipe.getCraftingResult(inv).copy();
         
-        // Find the block used - specifically looking for the placeholder character's position
+        // Find the block used - specifically looking for the placeholder character\"s position
+        // The placeholderIngredient is derived from blockChar in the factory.
+        // We should use that to find the *correct* block in the inventory.
         ItemStack blockStack = ItemStack.EMPTY;
-        
-        // Use the pattern and blockChar to find which slot should contain the block
-        // This is safer than just picking the first ItemBlock found.
-        NonNullList<Ingredient> ingredients = recipe.getIngredients();
         for (int i = 0; i < inv.getSizeInventory(); i++) {
             ItemStack stack = inv.getStackInSlot(i);
-            if (!stack.isEmpty() && stack.getItem() instanceof ItemBlock) {
-                // We check if this ingredient slot in the recipe allows this block
-                // For 'any block' recipes, we usually use the blockChar to identify it
-                // Since ShapedRecipes doesn't expose the key map, we have to infer or
-                // just assume the first ItemBlock that fits the criteria.
+            if (!stack.isEmpty() && placeholderIngredient.apply(stack)) {
                 blockStack = stack;
                 break;
             }
@@ -216,14 +196,14 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
                     String s = row.substring(j, j + 1);
                     Ingredient ingredient = key.get(s);
                     if (ingredient == null && !s.equals(" ")) {
-                        throw new com.google.gson.JsonSyntaxException("Pattern references symbol '" + s + "' but it's not defined in the key");
+                        throw new com.google.gson.JsonSyntaxException("Pattern references symbol \"" + s + "\" but it\"s not defined in the key");
                     }
                     ingredients.set(i * width + j, ingredient == null ? Ingredient.EMPTY : ingredient);
                 }
             }
 
             ItemStack result = CraftingHelper.getItemStack(JsonUtils.getJsonObject(json, "result"), context);
-            return new AssemblerShapedRecipe(new ShapedRecipes(group, width, height, ingredients, result), blockChar);
+            return new AssemblerShapedRecipe(new ShapedRecipes(group, width, height, ingredients, result), blockChar, key.get(String.valueOf(blockChar)));
         }
     }
 }

@@ -3,7 +3,7 @@
   "block_char": "B",
   "pattern": ["BBB", "BRB", "BBB"],
   "key": {
-    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "B": { "type": "forge:ore_dict", "ore": "apparati:block" },
     "R": { "item": "minecraft:redstone_torch" }
   },
   "result": { "item": "apparati:core" }

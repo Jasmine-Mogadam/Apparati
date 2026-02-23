@@ -72,6 +72,7 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
         int width = recipe.recipeWidth;
         int height = recipe.recipeHeight;
         NonNullList<Ingredient> ingredients = recipe.getIngredients();
+        ItemStack firstBlockFound = ItemStack.EMPTY;
 
         for (int x = 0; x < 3; ++x) {
             for (int y = 0; y < 3; ++y) {
@@ -93,6 +94,17 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
                 if (!target.apply(stack)) {
                     return false;
                 }
+
+                // If this slot is the placeholder ingredient (the "block"), verify consistency
+                if (target == this.placeholderIngredient) {
+                    if (firstBlockFound.isEmpty()) {
+                        firstBlockFound = stack;
+                    } else {
+                        if (!ItemStack.areItemsEqual(firstBlockFound, stack) || !ItemStack.areItemStackTagsEqual(firstBlockFound, stack)) {
+                            return false;
+                        }
+                    }
+                }
             }
         }
         return true;
@@ -103,18 +115,22 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
     public ItemStack getCraftingResult(@Nonnull InventoryCrafting inv) {
         ItemStack result = recipe.getCraftingResult(inv).copy();
         
-        // Find the block used - specifically looking for the placeholder character\"s position
-        // The placeholderIngredient is derived from blockChar in the factory.
-        // We should use that to find the *correct* block in the inventory.
+        // Find the block used in the recipe to transfer its texture/material properties to the result.
+        // The placeholderIngredient corresponds to the 'block_char' defined in the recipe JSON.
+        // This ingredient represents the main structural component (like a chassis) whose material
+        // should be reflected in the final assembled item.
         ItemStack blockStack = ItemStack.EMPTY;
         for (int i = 0; i < inv.getSizeInventory(); i++) {
             ItemStack stack = inv.getStackInSlot(i);
+            // Check if the item in this slot matches the placeholder ingredient (the structural block)
             if (!stack.isEmpty() && placeholderIngredient.apply(stack)) {
                 blockStack = stack;
                 break;
             }
         }
 
+        // If the structural block was found, write its information to the result's NBT.
+        // This allows the client-side renderer to know which texture to apply to the model.
         if (!blockStack.isEmpty()) {
             NBTTagCompound tag = result.hasTagCompound() ? result.getTagCompound() : new NBTTagCompound();
             Block block = ((ItemBlock) blockStack.getItem()).getBlock();
@@ -203,7 +219,19 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
             }
 
             ItemStack result = CraftingHelper.getItemStack(JsonUtils.getJsonObject(json, "result"), context);
-            return new AssemblerShapedRecipe(new ShapedRecipes(group, width, height, ingredients, result), blockChar, key.get(String.valueOf(blockChar)));
+
+            // Use the actual ingredient defined in the recipe key for the block character
+            // This ensures that the Ingredient object we use for checking consistency in checkMatch
+            // is the exact same object instance as the one in the recipe's ingredient list.
+            Ingredient blockIngredient = key.get(String.valueOf(blockChar));
+            
+            if (blockIngredient == null) {
+                 // Fallback: If for some reason the blockChar isn't in the key (e.g. malformed recipe or not used), create a default one.
+                 // Ideally this case shouldn't be hit for valid recipes.
+                 blockIngredient = Ingredient.fromStacks(OreDictionary.getOres(Constants.ORE_DICT_BLOCK_TAG).toArray(new ItemStack[0]));
+            }
+
+            return new AssemblerShapedRecipe(new ShapedRecipes(group, width, height, ingredients, result), blockChar, blockIngredient);
         }
     }
 }

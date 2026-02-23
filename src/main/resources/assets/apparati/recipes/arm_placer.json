@@ -3,7 +3,7 @@
   "block_char": "B",
   "pattern": ["  B", " D ", "B  "],
   "key": {
-    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "B": { "type": "forge:ore_dict", "ore": "apparati:block" },
     "D": { "item": "minecraft:dispenser" }
   },
   "result": { "item": "apparati:arm_placer" }

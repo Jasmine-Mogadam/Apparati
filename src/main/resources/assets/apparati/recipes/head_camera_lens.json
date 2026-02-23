@@ -3,8 +3,8 @@
   "block_char": "B",
   "pattern": [" B ", " G ", " B "],
   "key": {
-    "B": { "type": "forge:ore_dict", "ore": "block" },
-    "G": { "item": "minecraft:glass" }
+    "B": { "type": "forge:ore_dict", "ore": "apparati:block" },
+    "G": { "type": "forge:ore_dict", "ore": "blockGlass" }
   },
   "result": { "item": "apparati:head_camera_lens" }
 }

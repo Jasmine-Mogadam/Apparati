@@ -23,8 +23,8 @@ public class ContainerApparatiAssembler extends Container {
     }
 
     private void setupSlots() {
-        // We add ALL slots to the container once to keep indices consistent.
-        // We will move slots off-screen (x = -1000) when their tab is not active.
+        // Assembler has several tabs with different slots
+        // slots move off-screen (x = -1000) when their tab is not active.
         int activeTab = te.getActiveTab();
 
         // Crafting Slots: 0-8
@@ -69,13 +69,6 @@ public class ContainerApparatiAssembler extends Container {
         if (activeTab == 0) onCraftMatrixChanged();
     }
 
-    public void updateSlots() {
-        // This is tricky, might need to re-add slots or just move them off-screen
-        // For simplicity, we'll just handle visibility in the GUI if possible,
-        // but Container usually needs consistent slot counts.
-        // Actually, many mods just have all slots present but move them based on tab.
-    }
-
     private void addPlayerSlots(InventoryPlayer playerInv) {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
@@ -98,6 +91,29 @@ public class ContainerApparatiAssembler extends Container {
         return ItemStack.EMPTY;
     }
 
+    private java.util.List<IRecipe> matchingRecipes = new java.util.ArrayList<>();
+
+    @Override
+    public void detectAndSendChanges() {
+        super.detectAndSendChanges();
+        
+        // If there's more than 1 matching recipe, cycle through them every 2 seconds
+        if (!te.getWorld().isRemote && matchingRecipes.size() > 1) {
+            long time = te.getWorld().getTotalWorldTime();
+            if (time % 40 == 0) { // Cycle every 2 seconds
+                int index = (int) ((time / 40) % matchingRecipes.size());
+                
+                // Re-creates craftMatrix to get result on swap for consistency (use same items)
+                InventoryCrafting craftMatrix = new InventoryCrafting(this, 3, 3);
+                for (int i = 0; i < 9; i++) {
+                    craftMatrix.setInventorySlotContents(i, te.craftingInv.getStackInSlot(i));
+                }
+                
+                te.craftingResult.setStackInSlot(0, matchingRecipes.get(index).getCraftingResult(craftMatrix));
+            }
+        }
+    }
+
     public void onCraftMatrixChanged() {
         if (te.getWorld() == null) return;
         
@@ -106,15 +122,25 @@ public class ContainerApparatiAssembler extends Container {
             craftMatrix.setInventorySlotContents(i, te.craftingInv.getStackInSlot(i));
         }
 
+        matchingRecipes.clear();
         ItemStack result = ItemStack.EMPTY;
+        
         for (IRecipe recipe : net.minecraftforge.fml.common.registry.ForgeRegistries.RECIPES) {
-            // Only allow our custom recipes in this assembler
+            // Only allow custom recipes in the assembler
             if (recipe instanceof AssemblerShapedRecipe) {
                 if (recipe.matches(craftMatrix, te.getWorld())) {
-                    result = recipe.getCraftingResult(craftMatrix);
-                    break;
+                    matchingRecipes.add(recipe);
                 }
             }
+        }
+        
+        // if there's a result, display it. 
+        // If multiple matches, cycle through them in detectAndSendChanges() 
+        // to ensure the same result is shown for the same input until it changes.
+        if (!matchingRecipes.isEmpty()) {
+            long time = te.getWorld().getTotalWorldTime();
+            int index = (int) ((time / 40) % matchingRecipes.size());
+            result = matchingRecipes.get(index).getCraftingResult(craftMatrix);
         }
         
         te.craftingResult.setStackInSlot(0, result);

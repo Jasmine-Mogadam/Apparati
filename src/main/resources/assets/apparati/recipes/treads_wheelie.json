@@ -3,7 +3,7 @@
   "block_char": "B",
   "pattern": [" B ", "BIB", " B "],
   "key": {
-    "B": { "type": "forge:ore_dict", "ore": "block" },
+    "B": { "type": "forge:ore_dict", "ore": "apparati:block" },
     "I": [
       { "type": "forge:ore_dict", "ore": "wool" },
       { "item": "minecraft:string" },

@@ -3,7 +3,7 @@
   "block_char": "B",
   "pattern": ["BBB", "B B", "BBB"],
   "key": {
-    "B": { "type": "forge:ore_dict", "ore": "block" }
+    "B": { "type": "forge:ore_dict", "ore": "apparati:block" }
   },
   "result": { "item": "apparati:chassis_hollow" }
 }

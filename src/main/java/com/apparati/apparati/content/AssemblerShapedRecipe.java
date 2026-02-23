@@ -129,8 +129,10 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
             }
         }
 
-        // If the structural block was found, write its information to the result's NBT.
-        // This allows the client-side renderer to know which texture to apply to the model.
+        // If we found the block that determines the material (like the chassis block),
+        // we need to save its details to the crafted item.
+        // This way, when the item is drawn on screen or placed in the world, 
+        // the renderer knows which texture (Gold, Iron, Granite, etc.) to paint it with.
         if (!blockStack.isEmpty()) {
             NBTTagCompound tag = result.hasTagCompound() ? result.getTagCompound() : new NBTTagCompound();
             Block block = ((ItemBlock) blockStack.getItem()).getBlock();
@@ -138,10 +140,14 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
             if (registryName != null) {
                 tag.setString("BlockEntity", registryName.toString());
                 
-                // Also set material based on the block name for texture selection
-                String material = registryName.getResourcePath();
-                if (material.endsWith("_block")) {
-                    material = material.substring(0, material.length() - 6);
+                // We save the material name so the renderer can find the block later.
+                // We use the full name "modid:blockname" (e.g. "minecraft:stone").
+                // If the block has variants (like Granite is Stone with metadata 1),
+                // we assume "minecraft:stone:1" so the renderer knows to pick Granite instead of Stone.
+                String material = registryName.toString();
+                int meta = blockStack.getMetadata();
+                if (meta > 0) {
+                    material += ":" + meta;
                 }
                 tag.setString("Material", material);
             }

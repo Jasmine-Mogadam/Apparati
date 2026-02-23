@@ -52,6 +52,7 @@ public class ContainerApparatiAssembler extends Container {
                 for (int i = 0; i < te.craftingInv.getSlots(); i++) {
                     te.craftingInv.extractItem(i, 1, false);
                 }
+                onCraftMatrixChanged();
                 return super.onTake(playerIn, stack);
             }
         });
@@ -104,7 +105,18 @@ public class ContainerApparatiAssembler extends Container {
                 int index = (int) ((time / 40) % matchingRecipes.size());
                 
                 // Re-creates craftMatrix to get result on swap for consistency (use same items)
-                InventoryCrafting craftMatrix = new InventoryCrafting(this, 3, 3);
+                // Use a dummy container to prevent recursion via onCraftMatrixChanged -> detectAndSendChanges
+                InventoryCrafting craftMatrix = new InventoryCrafting(new Container() {
+                    @Override
+                    public boolean canInteractWith(EntityPlayer playerIn) {
+                        return false;
+                    }
+                    @Override
+                    public void onCraftMatrixChanged(net.minecraft.inventory.IInventory inventoryIn) {
+                        // No-op to prevent recursion
+                    }
+                }, 3, 3);
+
                 for (int i = 0; i < 9; i++) {
                     craftMatrix.setInventorySlotContents(i, te.craftingInv.getStackInSlot(i));
                 }

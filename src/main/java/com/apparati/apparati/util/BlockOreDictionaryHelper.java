@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 public class BlockOreDictionaryHelper {
 
-    private static final Logger LOGGER = LogManager.getLogger("ApparatiOreDictHelper"); // Use a specific logger name for the helper
+    private static final Logger LOGGER = LogManager.getLogger("ApparatiOreDictHelper");
 
     public static void registerApparatiBlocks() {
         LOGGER.info("Attempting to register all *true* ItemBlocks to ore dictionary \"{}\" in registerApparatiBlocks...", Constants.ORE_DICT_BLOCK_TAG);
@@ -54,12 +54,10 @@ public class BlockOreDictionaryHelper {
                 }
             }
         }
-        LOGGER.info("Finished ore dictionary registration for ItemBlocks in registerApparatiBlocks.");
     }
 
     private static void registerBlockToOreDict(Block block, ResourceLocation blockRegName, int meta, ItemStack stack, int blockOreId) {
         if (shouldSkipBlockRegistration(block, blockRegName, meta)) {
-            LOGGER.info("  Skipping block {} (meta {}) because of shouldSkipBlockRegistration.", blockRegName, meta);
             return;
         }
         
@@ -73,9 +71,6 @@ public class BlockOreDictionaryHelper {
         
         if (!alreadyRegisteredAsBlock) {
             OreDictionary.registerOre(Constants.ORE_DICT_BLOCK_TAG, stack);
-            LOGGER.info("  Registered {} (meta {}) as ore:{}", blockRegName, meta, Constants.ORE_DICT_BLOCK_TAG);
-        } else {
-            LOGGER.info("  {} (meta {}) is already registered as ore:{}", blockRegName, meta, Constants.ORE_DICT_BLOCK_TAG);
         }
     }
 

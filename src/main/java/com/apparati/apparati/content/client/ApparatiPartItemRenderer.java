@@ -23,12 +23,16 @@ import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.geo.render.built.GeoQuad;
 import software.bernie.geckolib3.geo.render.built.GeoVertex;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @SideOnly(Side.CLIENT)
 public class ApparatiPartItemRenderer extends TileEntityItemStackRenderer implements IGeoRenderer<ApparatiPartItemRenderer.DummyAnimatable> {
     public static final ApparatiPartItemRenderer INSTANCE = new ApparatiPartItemRenderer();
     
     private ApparatiItemModel model;
     private DummyAnimatable dummy;
+    private final Map<GeoVertex, float[]> originalUVs = new HashMap<>();
 
     private ApparatiItemModel getModel() {
         if (this.model == null) {
@@ -102,19 +106,26 @@ public class ApparatiPartItemRenderer extends TileEntityItemStackRenderer implem
         GeoModel geoModel = model.getModel(model.getModelLocation(null));
         
         // Apply block texture sprite logic
-        String blockName = material.contains(":") ? material : "minecraft:" + material + "_block";
-        Block block = Block.getBlockFromName(blockName);
-        if (block == null) block = net.minecraft.init.Blocks.IRON_BLOCK;
-
-        TextureAtlasSprite sprite = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getTexture(block.getDefaultState());
+        net.minecraft.block.state.IBlockState state = ApparatiTextureHelper.getBlockStateFromMaterial(material);
+        TextureAtlasSprite sprite = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getTexture(state);
         
+        // Clear previous UVs
+        originalUVs.clear();
+
         if (sprite != null) {
             applySpriteToModel(geoModel, sprite);
         }
 
         this.render(geoModel, getDummy(), partialTicks, 1.0f, 1.0f, 1.0f, 1.0f);
 
+        // Restore UVs
+        restoreUVs();
+
         GlStateManager.popMatrix();
+    }
+
+    private void restoreUVs() {
+        ApparatiTextureHelper.restoreUVs(originalUVs);
     }
 
     @Override
@@ -135,20 +146,10 @@ public class ApparatiPartItemRenderer extends TileEntityItemStackRenderer implem
     }
 
     private void applySpriteToBone(GeoBone bone, TextureAtlasSprite sprite) {
-        for (GeoCube cube : bone.childCubes) {
-            for (GeoQuad quad : cube.quads) {
-                for (GeoVertex vertex : quad.vertices) {
-                    float u = vertex.textureU;
-                    float v = vertex.textureV;
-                    float normalizedU = (u % 16.0f) / 16.0f;
-                    float normalizedV = (v % 16.0f) / 16.0f;
-                    if (normalizedU < 0) normalizedU += 1.0f;
-                    if (normalizedV < 0) normalizedV += 1.0f;
-                    vertex.textureU = sprite.getInterpolatedU(normalizedU * 16.0);
-                    vertex.textureV = sprite.getInterpolatedV(normalizedV * 16.0);
-                }
-            }
-        }
+        // Use helper to apply to geometry
+        ApparatiTextureHelper.applySpriteToBoneGeometry(bone, sprite, originalUVs);
+        
+        // Recurse to children
         for (GeoBone child : bone.childBones) {
             applySpriteToBone(child, sprite);
         }

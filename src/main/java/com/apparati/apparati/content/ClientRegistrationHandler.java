@@ -32,8 +32,11 @@ public class ClientRegistrationHandler {
                 
                 // Assign TEISR here, where we know client systems are ready
                 if (item instanceof ApparatiPartItem) {
-                    System.out.println("Apparati: Setting TEISR for " + item.getRegistryName());
-                    item.setTileEntityItemStackRenderer(com.apparati.apparati.content.client.ApparatiPartItemRenderer.INSTANCE);
+                    ApparatiPartItem part = (ApparatiPartItem) item;
+                    if (part.getPartType() != ApparatiPartItem.PartType.CORE) {
+                        System.out.println("Apparati: Setting TEISR for " + item.getRegistryName());
+                        item.setTileEntityItemStackRenderer(com.apparati.apparati.content.client.ApparatiPartItemRenderer.INSTANCE);
+                    }
                 }
             }
         }

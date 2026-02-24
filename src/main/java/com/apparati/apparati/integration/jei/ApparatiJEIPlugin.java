@@ -29,7 +29,8 @@ public class ApparatiJEIPlugin implements IModPlugin {
     @Override
     public void register(IModRegistry registry) {
         registry.handleRecipes(AssemblerShapedRecipe.class, ApparatiAssemblerRecipeWrapper::new, ASSEMBLER_CATEGORY);
-        // Crafting slots are 0-8, Player inventory is 16-51
+        
+        // Re-using standard transfer handler
         registry.getRecipeTransferRegistry().addRecipeTransferHandler(com.apparati.apparati.content.ContainerApparatiAssembler.class, ASSEMBLER_CATEGORY, 0, 9, 16, 36);
 
         List<AssemblerShapedRecipe> recipes = new ArrayList<>();
@@ -42,7 +43,5 @@ public class ApparatiJEIPlugin implements IModPlugin {
         registry.addRecipes(recipes, ASSEMBLER_CATEGORY);
         
         registry.addRecipeCatalyst(new ItemStack(net.minecraft.item.Item.getItemFromBlock(net.minecraft.block.Block.getBlockFromName(Constants.MOD_ID + ":apparati_assembler"))), ASSEMBLER_CATEGORY);
-        
-        registry.addRecipeClickArea(GuiApparatiAssembler.class, 84, 40, 24, 18, ASSEMBLER_CATEGORY);
     }
 }

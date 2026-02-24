@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class ApparatiEntity extends EntityCreature implements IAnimatable {
+    public static final int GUI_ID_INVENTORY = 1;
     private final AnimationFactory factory = new AnimationFactory(this);
 
     // Data Parameters for Parts (Storing ID corresponding to PartType ordinal)
@@ -44,25 +45,88 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
     public static final DataParameter<String> ARM_RIGHT_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
     public static final DataParameter<String> CHASSIS_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
     public static final DataParameter<String> TREADS_MATERIAL = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
+    
+    // Core Stack for client sync
+    public static final DataParameter<ItemStack> CORE_STACK = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.ITEM_STACK);
+    
+    // Error State
+    public static final DataParameter<Boolean> ERROR_STATE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.BOOLEAN);
+    public static final DataParameter<String> ERROR_MESSAGE = EntityDataManager.createKey(ApparatiEntity.class, DataSerializers.STRING);
 
     // Valid materials for randomization
     private static final String[] VALID_MATERIALS = {"iron", "gold", "copper", "lead", "silver"};
 
     // Internal Inventory for "Core" and "Storage"
     private final InventoryBasic inventory;
+    public int numPlayersUsing = 0;
 
     public ApparatiEntity(World worldIn) {
         super(worldIn);
         this.setSize(0.6F, 1.0F);
         this.inventory = new InventoryBasic("ApparatiInventory", false, 27); // Standard chest size
+        this.inventory.addInventoryChangeListener(inv -> {
+             // Sync Core Slot (Slot 0) to DataParameter
+             ItemStack core = inv.getStackInSlot(0);
+             this.dataManager.set(CORE_STACK, core);
+        });
+    }
+    
+    public InventoryBasic getInventory() {
+        return this.inventory;
     }
 
     @Override
-    protected void initEntityAI() {
+    public void initEntityAI() {
         this.tasks.addTask(0, new EntityAISwimming(this));
-        this.tasks.addTask(5, new EntityAIWanderAvoidWater(this, 1.0D));
-        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
-        this.tasks.addTask(6, new EntityAILookIdle(this));
+        this.tasks.addTask(1, new EntityAIObtain(this));
+        this.tasks.addTask(2, new EntityAIMovement(this));
+        
+        // Conditional Wander: Needs Core, Behaviors, and No GUI Open
+        this.tasks.addTask(5, new EntityAIWanderAvoidWater(this, 1.0D) {
+            @Override
+            public boolean shouldExecute() {
+                return hasCore() && hasBehaviors() && numPlayersUsing == 0 && super.shouldExecute();
+            }
+            @Override
+            public boolean shouldContinueExecuting() {
+                return hasCore() && hasBehaviors() && numPlayersUsing == 0 && super.shouldContinueExecuting();
+            }
+        });
+        
+        // Conditional Watch Closest: Needs Core only
+        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F) {
+            @Override
+            public boolean shouldExecute() {
+                return hasCore() && super.shouldExecute();
+            }
+            @Override
+            public boolean shouldContinueExecuting() {
+                return hasCore() && super.shouldContinueExecuting();
+            }
+        });
+        
+        // Conditional Look Idle: Needs Core only
+        this.tasks.addTask(6, new EntityAILookIdle(this) {
+            @Override
+            public boolean shouldExecute() {
+                return hasCore() && super.shouldExecute();
+            }
+            @Override
+            public boolean shouldContinueExecuting() {
+                return hasCore() && super.shouldContinueExecuting();
+            }
+        });
+    }
+
+    private boolean hasCore() {
+        return !this.dataManager.get(CORE_STACK).isEmpty();
+    }
+    
+    public boolean hasBehaviors() {
+        ItemStack core = this.dataManager.get(CORE_STACK);
+        if (core.isEmpty() || !core.hasTagCompound()) return false;
+        net.minecraft.nbt.NBTTagList behaviors = core.getTagCompound().getTagList("Behaviors", 8); // 8 = String
+        return behaviors.tagCount() > 0;
     }
 
     @Override
@@ -79,6 +143,9 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         this.dataManager.register(ARM_RIGHT_MATERIAL, "iron");
         this.dataManager.register(CHASSIS_MATERIAL, "iron");
         this.dataManager.register(TREADS_MATERIAL, "iron");
+        this.dataManager.register(CORE_STACK, ItemStack.EMPTY);
+        this.dataManager.register(ERROR_STATE, false);
+        this.dataManager.register(ERROR_MESSAGE, "");
     }
 
     @Override
@@ -92,6 +159,12 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
     public void onUpdate() {
         super.onUpdate();
         if (!this.world.isRemote) {
+            if (!hasCore()) {
+                // If no core, reset state and don't do anything
+                this.getNavigator().clearPath(); // Reset navigator
+                return;
+            }
+            
             // Only tick sensors every 20 ticks (1 second) to save performance
             if (this.ticksExisted % 20 == 0) {
                 tickSensors();
@@ -260,12 +333,80 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
 
     // GeckoLib Implementation
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+        if (!hasCore()) {
+             event.getController().setAnimation(new AnimationBuilder().addAnimation("deactivated", true));
+             return PlayState.CONTINUE;
+        }
+        
+        if (this.dataManager.get(ERROR_STATE)) {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("error", true)); // Spin/Jump animation
+            return PlayState.CONTINUE;
+        }
+
         if (event.isMoving()) {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("walk", true));
         } else {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", true));
         }
         return PlayState.CONTINUE;
+    }
+    
+    public void setErrorState(String message) {
+        this.dataManager.set(ERROR_STATE, true);
+        this.dataManager.set(ERROR_MESSAGE, message);
+        
+        // Find a sign and equip it if we have a holder arm
+        int leftArmIndex = this.dataManager.get(ARM_LEFT_TYPE);
+        int rightArmIndex = this.dataManager.get(ARM_RIGHT_TYPE);
+        if (isHolder(leftArmIndex) || isHolder(rightArmIndex)) {
+            for (int i = 0; i < this.inventory.getSizeInventory(); i++) {
+                ItemStack stack = this.inventory.getStackInSlot(i);
+                if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.item.ItemSign) {
+                    this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, stack);
+                    stack.setStackDisplayName(message); // Rename item for tooltip visibility at least
+                    break;
+                }
+            }
+        }
+        
+        // Jump
+        if (this.onGround) {
+            this.motionY = 0.42D;
+        }
+    }
+    
+    public void clearErrorState() {
+        this.dataManager.set(ERROR_STATE, false);
+        this.dataManager.set(ERROR_MESSAGE, "");
+    }
+    
+    public void equipBestTool(net.minecraft.block.state.IBlockState state) {
+        int bestSlot = -1;
+        float bestSpeed = 1.0F;
+        
+        for (int i = 0; i < this.inventory.getSizeInventory(); i++) {
+            ItemStack stack = this.inventory.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                float speed = stack.getDestroySpeed(state);
+                if (speed > bestSpeed) {
+                    bestSpeed = speed;
+                    bestSlot = i;
+                }
+            }
+        }
+        
+        if (bestSlot != -1) {
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, this.inventory.getStackInSlot(bestSlot));
+        }
+    }
+    
+    @Override
+    public boolean processInteract(EntityPlayer player, EnumHand hand) {
+        if (!this.world.isRemote && player.isSneaking()) {
+             player.openGui(com.apparati.apparati.ApparatiMod.instance, GUI_ID_INVENTORY, this.world, this.getEntityId(), 0, 0);
+             return true;
+        }
+        return super.processInteract(player, hand);
     }
 
     @Override
@@ -323,6 +464,19 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         compound.setString("ArmRightMaterial", this.dataManager.get(ARM_RIGHT_MATERIAL));
         compound.setString("ChassisMaterial", this.dataManager.get(CHASSIS_MATERIAL));
         compound.setString("TreadsMaterial", this.dataManager.get(TREADS_MATERIAL));
+        
+        // Save Inventory
+        net.minecraft.nbt.NBTTagList items = new net.minecraft.nbt.NBTTagList();
+        for (int i = 0; i < this.inventory.getSizeInventory(); ++i) {
+            ItemStack stack = this.inventory.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                NBTTagCompound itemTag = new NBTTagCompound();
+                itemTag.setByte("Slot", (byte)i);
+                stack.writeToNBT(itemTag);
+                items.appendTag(itemTag);
+            }
+        }
+        compound.setTag("Items", items);
     }
 
     @Override
@@ -339,5 +493,17 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         if (compound.hasKey("ArmRightMaterial")) this.dataManager.set(ARM_RIGHT_MATERIAL, compound.getString("ArmRightMaterial"));
         if (compound.hasKey("ChassisMaterial")) this.dataManager.set(CHASSIS_MATERIAL, compound.getString("ChassisMaterial"));
         if (compound.hasKey("TreadsMaterial")) this.dataManager.set(TREADS_MATERIAL, compound.getString("TreadsMaterial"));
+        
+        // Load Inventory
+        if (compound.hasKey("Items")) {
+            net.minecraft.nbt.NBTTagList items = compound.getTagList("Items", 10);
+            for (int i = 0; i < items.tagCount(); ++i) {
+                NBTTagCompound itemTag = items.getCompoundTagAt(i);
+                int slot = itemTag.getByte("Slot") & 255;
+                if (slot >= 0 && slot < this.inventory.getSizeInventory()) {
+                    this.inventory.setInventorySlotContents(slot, new ItemStack(itemTag));
+                }
+            }
+        }
     }
 }

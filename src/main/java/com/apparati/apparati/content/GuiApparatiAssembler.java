@@ -11,9 +11,8 @@ import org.lwjgl.input.Keyboard;
 import java.io.IOException;
 
 public class GuiApparatiAssembler extends GuiContainer {
-    private static final ResourceLocation BG_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
+    private static final ResourceLocation BG_TEXTURE = new ResourceLocation("apparati", "textures/gui/assembler.png");
     private final TileEntityApparatiAssembler te;
-    private GuiTextField programmingField;
 
     public GuiApparatiAssembler(ContainerApparatiAssembler container, TileEntityApparatiAssembler te) {
         super(container);
@@ -29,36 +28,6 @@ public class GuiApparatiAssembler extends GuiContainer {
         this.buttonList.add(new GuiButton(0, guiLeft - 20, guiTop + 10, 20, 20, "C"));
         this.buttonList.add(new GuiButton(1, guiLeft - 20, guiTop + 35, 20, 20, "A"));
         this.buttonList.add(new GuiButton(2, guiLeft - 20, guiTop + 60, 20, 20, "P"));
-
-        Keyboard.enableRepeatEvents(true);
-        this.programmingField = new GuiTextField(0, fontRenderer, guiLeft + 20, guiTop + 60, 136, 12);
-        this.programmingField.setTextColor(-1);
-        this.programmingField.setDisabledTextColour(-1);
-        this.programmingField.setEnableBackgroundDrawing(true);
-        this.programmingField.setMaxStringLength(100);
-        
-        // Load text from core if present
-        updateProgrammingField();
-    }
-
-    private void updateProgrammingField() {
-        if (te.getActiveTab() == 2 && !te.programmingInv.getStackInSlot(0).isEmpty()) {
-            this.programmingField.setEnabled(true);
-            String text = te.programmingInv.getStackInSlot(0).getDisplayName(); // Placeholder
-            if (te.programmingInv.getStackInSlot(0).hasTagCompound()) {
-                text = te.programmingInv.getStackInSlot(0).getTagCompound().getString("Description");
-            }
-            this.programmingField.setText(text);
-        } else {
-            this.programmingField.setEnabled(false);
-            this.programmingField.setText("");
-        }
-    }
-
-    @Override
-    public void onGuiClosed() {
-        super.onGuiClosed();
-        Keyboard.enableRepeatEvents(false);
     }
 
     @Override
@@ -66,24 +35,9 @@ public class GuiApparatiAssembler extends GuiContainer {
         te.setActiveTab(button.id);
         // We'd need a packet to sync tab change to server, then server updates container slots
         // For now, let's assume TE sync handles it or we'll add the packet later.
-        updateProgrammingField();
+        
         // Re-init to update slots (this is a bit hacky but works for demo)
         this.mc.player.openGui(com.apparati.apparati.ApparatiMod.instance, 0, te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ());
-    }
-
-    @Override
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (this.programmingField.textboxKeyTyped(typedChar, keyCode)) {
-             // Send packet to server to update Core NBT
-        } else {
-            super.keyTyped(typedChar, keyCode);
-        }
-    }
-
-    @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        super.mouseClicked(mouseX, mouseY, mouseButton);
-        this.programmingField.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override
@@ -93,23 +47,64 @@ public class GuiApparatiAssembler extends GuiContainer {
         this.renderHoveredToolTip(mouseX, mouseY);
     }
 
+    private static final ResourceLocation CRAFTING_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
+    private static final ResourceLocation ASSEMBLER_TEXTURE = new ResourceLocation("apparati", "textures/gui/assembler.png");
+
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        this.mc.getTextureManager().bindTexture(BG_TEXTURE);
-        int i = (this.width - this.xSize) / 2;
-        int j = (this.height - this.ySize) / 2;
         
         if (te.getActiveTab() == 0) {
-            this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+            this.mc.getTextureManager().bindTexture(CRAFTING_TEXTURE);
         } else {
-            // Use a fallback or custom background for other tabs if they don't fit the crafting table texture
-            // For now, still using the crafting table base but maybe we want to keep some elements.
-            this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+            this.mc.getTextureManager().bindTexture(ASSEMBLER_TEXTURE);
+        }
+
+        int i = (this.width - this.xSize) / 2;
+        int j = (this.height - this.ySize) / 2;
+        this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+    }
+
+    // Custom JEI handling to switch tab on + click
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        // Intercept JEI '+' click which usually sends a key or mouse event
+        // In 1.12 JEI, the '+' button click area is often handled by JEI itself,
+        // but we can try to detect if we're on the wrong tab when the GUI loses focus or updates.
+        super.keyTyped(typedChar, keyCode);
+    }
+
+    @Override
+    public void updateScreen() {
+        super.updateScreen();
+        // Check if there are items in the crafting matrix while NOT on the crafting tab
+        // This is a sign that JEI just autofilled (since JEI bypasses tab restrictions on the container level if slots are just moved)
+        if (te.getActiveTab() != 0) {
+            boolean hasItems = false;
+            for (int i = 0; i < te.craftingInv.getSlots(); i++) {
+                if (!te.craftingInv.getStackInSlot(i).isEmpty()) {
+                    hasItems = true;
+                    break;
+                }
+            }
+            if (hasItems) {
+                te.setActiveTab(0);
+                // Re-init to update slots
+                this.mc.player.openGui(com.apparati.apparati.ApparatiMod.instance, 0, te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ());
+            }
         }
         
-        if (te.getActiveTab() == 2) {
-            this.programmingField.drawTextBox();
+        // Ensure result is updated if items are present
+        if (te.getActiveTab() == 0 && this.inventorySlots instanceof ContainerApparatiAssembler) {
+            ((ContainerApparatiAssembler)this.inventorySlots).onCraftMatrixChanged();
+        }
+    }
+
+    public void onJEIAutofill() {
+        if (te.getActiveTab() != 0) {
+            te.setActiveTab(0);
+            // Re-init to update slots
+            this.mc.player.openGui(com.apparati.apparati.ApparatiMod.instance, 0, te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ());
         }
     }
 }

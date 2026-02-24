@@ -14,6 +14,8 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 
 public class BlockApparatiAssembler extends Block {
+    public static final int GUI_ID = 0;
+
     public BlockApparatiAssembler() {
         super(Material.IRON);
         this.setRegistryName("apparati_assembler");
@@ -36,7 +38,7 @@ public class BlockApparatiAssembler extends Block {
     @Override
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (worldIn.isRemote) return true;
-        playerIn.openGui(ApparatiMod.instance, 0, worldIn, pos.getX(), pos.getY(), pos.getZ());
+        playerIn.openGui(ApparatiMod.instance, GUI_ID, worldIn, pos.getX(), pos.getY(), pos.getZ());
         return true;
     }
 }

@@ -135,23 +135,46 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
         // the renderer knows which texture (Gold, Iron, Granite, etc.) to paint it with.
         if (!blockStack.isEmpty()) {
             NBTTagCompound tag = result.hasTagCompound() ? result.getTagCompound() : new NBTTagCompound();
-            Block block = ((ItemBlock) blockStack.getItem()).getBlock();
-            ResourceLocation registryName = block.getRegistryName();
-            if (registryName != null) {
-                tag.setString("BlockEntity", registryName.toString());
-                
-                // We save the material name so the renderer can find the block later.
-                // We use the full name "modid:blockname" (e.g. "minecraft:stone").
-                // If the block has variants (like Granite is Stone with metadata 1),
-                // we assume "minecraft:stone:1" so the renderer knows to pick Granite instead of Stone.
-                String material = registryName.toString();
-                int meta = blockStack.getMetadata();
-                if (meta > 0) {
-                    material += ":" + meta;
+            
+            if (blockStack.getItem() instanceof ItemBlock) {
+                Block block = ((ItemBlock) blockStack.getItem()).getBlock();
+                ResourceLocation registryName = block.getRegistryName();
+                if (registryName != null) {
+                    tag.setString("BlockEntity", registryName.toString());
+                    
+                    // We save the material name so the renderer can find the block later.
+                    // We use the full name "modid:blockname" (e.g. "minecraft:stone").
+                    // If the block has variants (like Granite is Stone with metadata 1),
+                    // we assume "minecraft:stone:1" so the renderer knows to pick Granite instead of Stone.
+                    String material = registryName.toString();
+                    int meta = blockStack.getMetadata();
+                    if (meta > 0) {
+                        material += ":" + meta;
+                    }
+                    tag.setString("Material", material);
                 }
-                tag.setString("Material", material);
+                tag.setInteger("BlockMeta", blockStack.getMetadata());
+            } else {
+                // Handle non-block items (e.g. ingots/gems for Core tiers)
+                ResourceLocation registryName = blockStack.getItem().getRegistryName();
+                if (registryName != null) {
+                    String material = registryName.toString();
+                    
+                    // Map specific materials to tiers
+                    int tier = 0;
+                    if (material.equals("minecraft:iron_ingot")) tier = 1;
+                    else if (material.equals("minecraft:gold_ingot")) tier = 2;
+                    else if (material.equals("minecraft:diamond")) tier = 3;
+                    else if (material.equals("minecraft:netherite_ingot")) tier = 4;
+                    
+                    if (tier > 0) {
+                        tag.setInteger("Tier", tier);
+                        // Also set Material for display purposes if needed
+                        tag.setString("Material", material);
+                    }
+                }
             }
-            tag.setInteger("BlockMeta", blockStack.getMetadata());
+            
             result.setTagCompound(tag);
         }
 

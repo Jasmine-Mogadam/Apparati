@@ -12,9 +12,14 @@ public class GuiHandler implements IGuiHandler {
     @Nullable
     @Override
     public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
-        if (ID == 0) {
+        if (ID == BlockApparatiAssembler.GUI_ID) {
             TileEntityApparatiAssembler te = (TileEntityApparatiAssembler) world.getTileEntity(new BlockPos(x, y, z));
             return new ContainerApparatiAssembler(player.inventory, te);
+        } else if (ID == ApparatiEntity.GUI_ID_INVENTORY) {
+            net.minecraft.entity.Entity entity = world.getEntityByID(x);
+            if (entity instanceof ApparatiEntity) {
+                return new ContainerApparatiInventory(player.inventory, ((ApparatiEntity) entity).getInventory(), (ApparatiEntity) entity, player);
+            }
         }
         return null;
     }
@@ -22,9 +27,14 @@ public class GuiHandler implements IGuiHandler {
     @Nullable
     @Override
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
-        if (ID == 0) {
+        if (ID == BlockApparatiAssembler.GUI_ID) {
             TileEntityApparatiAssembler te = (TileEntityApparatiAssembler) world.getTileEntity(new BlockPos(x, y, z));
             return new GuiApparatiAssembler(new ContainerApparatiAssembler(player.inventory, te), te);
+        } else if (ID == ApparatiEntity.GUI_ID_INVENTORY) {
+            net.minecraft.entity.Entity entity = world.getEntityByID(x);
+            if (entity instanceof ApparatiEntity) {
+                return new GuiApparatiInventory(player.inventory, ((ApparatiEntity) entity).getInventory(), (ApparatiEntity) entity);
+            }
         }
         return null;
     }

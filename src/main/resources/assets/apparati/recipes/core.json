@@ -1,10 +1,20 @@
 {
   "type": "apparati:assembler_shaped",
-  "block_char": "B",
-  "pattern": ["BBB", "BRB", "BBB"],
+  "block_char": "M",
+  "pattern": [" S ", "SMS", " S "],
   "key": {
-    "B": { "type": "forge:ore_dict", "ore": "apparati:block" },
-    "R": { "item": "minecraft:redstone_torch" }
+    "M": [
+      { "type": "forge:ore_dict", "ore": "ingotIron" },
+      { "type": "forge:ore_dict", "ore": "ingotGold" },
+      { "type": "forge:ore_dict", "ore": "gemDiamond" },
+      { "type": "forge:ore_dict", "ore": "gemEmerald" }
+    ],
+    "S": [
+      { "type": "forge:ore_dict", "ore": "stone" },
+      { "type": "forge:ore_dict", "ore": "cobblestone" }
+    ]
   },
-  "result": { "item": "apparati:core" }
+  "result": {
+    "item": "apparati:core"
+  }
 }

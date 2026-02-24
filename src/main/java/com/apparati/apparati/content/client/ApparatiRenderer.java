@@ -35,9 +35,26 @@ public class ApparatiRenderer extends GeoEntityRenderer<ApparatiEntity> {
 
         GlStateManager.enableAlpha();
         super.render(model, animatable, partialTicks, red, green, blue, alpha);
+        
+        // Render Error Message on Sign
+        if (animatable.getDataManager().get(ApparatiEntity.ERROR_STATE)) {
+            String errorMsg = animatable.getDataManager().get(ApparatiEntity.ERROR_MESSAGE);
+            if (!errorMsg.isEmpty()) {
+                renderErrorText(animatable, errorMsg, partialTicks);
+            }
+        }
 
         // Restore UVs to avoid permanent modification of the cached model
         restoreUVs();
+    }
+
+    private void renderErrorText(ApparatiEntity entity, String text, float partialTicks) {
+        // Simple floating text above entity for visibility
+        double x = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks - renderManager.viewerPosX;
+        double y = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks - renderManager.viewerPosY + entity.height + 0.5D;
+        double z = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks - renderManager.viewerPosZ;
+        
+        renderLivingLabel(entity, text, x, y, z, 64);
     }
 
     private void restoreUVs() {

@@ -41,7 +41,8 @@ public class ContainerApparatiAssembler extends Container {
             }
         }
         // Crafting Result: 9
-        this.addSlotToContainer(new SlotItemHandler(te.craftingResult, 0, activeTab == 0 ? 124 : -1000, 35) {
+        // Also used for Assembly result when activeTab == 1
+        this.addSlotToContainer(new SlotItemHandler(te.craftingResult, 0, (activeTab == 0 || activeTab == 1) ? 124 : -1000, 35) {
             @Override
             public boolean isItemValid(ItemStack stack) {
                 return false;
@@ -49,20 +50,36 @@ public class ContainerApparatiAssembler extends Container {
 
             @Override
             public ItemStack onTake(EntityPlayer playerIn, ItemStack stack) {
-                for (int i = 0; i < te.craftingInv.getSlots(); i++) {
-                    te.craftingInv.extractItem(i, 1, false);
+                if (te.getActiveTab() == 0) {
+                    for (int i = 0; i < te.craftingInv.getSlots(); i++) {
+                        te.craftingInv.extractItem(i, 1, false);
+                    }
+                    onCraftMatrixChanged();
+                } else if (te.getActiveTab() == 1) {
+                    for (int i = 0; i < te.assemblyInv.getSlots(); i++) {
+                        te.assemblyInv.extractItem(i, 1, false);
+                    }
+                    // Trigger assembly result update
                 }
-                onCraftMatrixChanged();
                 return super.onTake(playerIn, stack);
             }
         });
 
-        // Assembly Slots: 10-14
-        this.addSlotToContainer(new PartSlot(te.assemblyInv, 0, activeTab == 1 ? 80 : -1000, 17, ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE));
-        this.addSlotToContainer(new PartSlot(te.assemblyInv, 1, activeTab == 1 ? 80 : -1000, 35, ApparatiPartItem.PartType.CHASSIS_HOLLOW));
-        this.addSlotToContainer(new PartSlot(te.assemblyInv, 2, activeTab == 1 ? 80 : -1000, 53, ApparatiPartItem.PartType.TREADS_WHEELIE));
-        this.addSlotToContainer(new PartSlot(te.assemblyInv, 3, activeTab == 1 ? 62 : -1000, 35, ApparatiPartItem.PartType.ARM_HOLDER));
-        this.addSlotToContainer(new PartSlot(te.assemblyInv, 4, activeTab == 1 ? 98 : -1000, 35, ApparatiPartItem.PartType.ARM_HOLDER));
+        // Assembly Slots: 10-14 (Centered around 48, 35 - same as C tab cross)
+        // Adjusting coordinates for better alignment with background
+        // C tab slots are 30+j*18, 17+i*18. 
+        // Cross is (1,0), (0,1), (1,1), (2,1), (1,2)
+        // Indices: 1, 3, 4, 5, 7
+        // (1,0) -> 30+1*18=48, 17+0*18=17
+        // (0,1) -> 30+0*18=30, 17+1*18=35
+        // (1,1) -> 30+1*18=48, 17+1*18=35
+        // (2,1) -> 30+2*18=66, 17+1*18=35
+        // (1,2) -> 30+1*18=48, 17+2*18=53
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 0, activeTab == 1 ? 48 : -1000, 17, ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 1, activeTab == 1 ? 48 : -1000, 35, ApparatiPartItem.PartType.CHASSIS_HOLLOW));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 2, activeTab == 1 ? 48 : -1000, 53, ApparatiPartItem.PartType.TREADS_WHEELIE));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 3, activeTab == 1 ? 30 : -1000, 35, ApparatiPartItem.PartType.ARM_HOLDER));
+        this.addSlotToContainer(new PartSlot(te.assemblyInv, 4, activeTab == 1 ? 66 : -1000, 35, ApparatiPartItem.PartType.ARM_HOLDER));
 
         // Programming Slot: 15
         this.addSlotToContainer(new PartSlot(te.programmingInv, 0, activeTab == 2 ? 80 : -1000, 35, ApparatiPartItem.PartType.CORE));
@@ -170,12 +187,10 @@ public class ContainerApparatiAssembler extends Container {
         public boolean isItemValid(ItemStack stack) {
             if (stack.getItem() instanceof ApparatiPartItem) {
                 ApparatiPartItem.PartType type = ((ApparatiPartItem) stack.getItem()).getPartType();
-                // Check if it matches the general category
-                if (required.name().startsWith("HEAD") && type.name().startsWith("HEAD")) return true;
-                if (required.name().startsWith("CHASSIS") && type.name().startsWith("CHASSIS")) return true;
-                if (required.name().startsWith("TREADS") && type.name().startsWith("TREADS")) return true;
-                if (required.name().startsWith("ARM") && type.name().startsWith("ARM")) return true;
-                if (required == ApparatiPartItem.PartType.CORE && type == ApparatiPartItem.PartType.CORE) return true;
+                ApparatiPartItem.PartCategory requiredCat = required.getCategory();
+                ApparatiPartItem.PartCategory stackCat = type.getCategory();
+                
+                return requiredCat == stackCat;
             }
             return false;
         }

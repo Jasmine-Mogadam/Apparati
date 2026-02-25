@@ -65,8 +65,7 @@ public class ApparatiPartItem extends Item {
         HEAD,
         ARM,
         CHASSIS,
-        TREADS,
-        CORE
+        TREADS
     }
 
     public enum PartType {
@@ -79,7 +78,7 @@ public class ApparatiPartItem extends Item {
         CHASSIS_CHEST(PartCategory.CHASSIS, "chest"),
         CHASSIS_SOLID(PartCategory.CHASSIS, "solid"),
         TREADS_WHEELIE(PartCategory.TREADS, "wheelie"),
-        CORE(PartCategory.CORE);
+        TREADS_HOVER(PartCategory.TREADS, "hover");
 
         private final PartCategory category;
         private final String[] bones;

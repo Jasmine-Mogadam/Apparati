@@ -40,8 +40,10 @@ public class RegistrationHandler {
         net.minecraft.block.Block assembler = net.minecraftforge.fml.common.registry.ForgeRegistries.BLOCKS.getValue(new ResourceLocation(Constants.MOD_ID, "apparati_assembler"));
         event.getRegistry().register(new net.minecraft.item.ItemBlock(assembler).setRegistryName("apparati_assembler").setCreativeTab(net.minecraft.creativetab.CreativeTabs.DECORATIONS));
         
+        event.getRegistry().register(new ApparatiItem().setCreativeTab(net.minecraft.creativetab.CreativeTabs.MISC));
+
         event.getRegistry().registerAll(
-            new ApparatiPartItem("core", ApparatiPartItem.PartType.CORE, 0),
+            new net.minecraft.item.Item().setRegistryName("core").setUnlocalizedName("core").setCreativeTab(net.minecraft.creativetab.CreativeTabs.MISC),
             new ApparatiPartItem("head_redstone_antennae", ApparatiPartItem.PartType.HEAD_REDSTONE_ANTENNAE, 1),
             new ApparatiPartItem("head_camera_lens", ApparatiPartItem.PartType.HEAD_CAMERA_LENS, 1),
             new ApparatiPartItem("head_microphone", ApparatiPartItem.PartType.HEAD_MICROPHONE, 1),
@@ -50,7 +52,8 @@ public class RegistrationHandler {
             new ApparatiPartItem("chassis_hollow", ApparatiPartItem.PartType.CHASSIS_HOLLOW, 1),
             new ApparatiPartItem("chassis_chest", ApparatiPartItem.PartType.CHASSIS_CHEST, 1),
             new ApparatiPartItem("chassis_solid", ApparatiPartItem.PartType.CHASSIS_SOLID, 1),
-            new ApparatiPartItem("treads_wheelie", ApparatiPartItem.PartType.TREADS_WHEELIE, 1)
+            new ApparatiPartItem("treads_wheelie", ApparatiPartItem.PartType.TREADS_WHEELIE, 1),
+            new ApparatiPartItem("treads_hover", ApparatiPartItem.PartType.TREADS_HOVER, 1)
         );
 
     }

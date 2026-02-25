@@ -111,8 +111,6 @@ public class ApparatiRenderer extends GeoEntityRenderer<ApparatiEntity> {
                                 return animatable.getDataManager().get(ApparatiEntity.CHASSIS_MATERIAL);
                             case TREADS:
                                 return animatable.getDataManager().get(ApparatiEntity.TREADS_MATERIAL);
-                            case CORE:
-                                return "iron"; // Core usually doesn't change material visually in the same way?
                             default:
                                 return "iron";
                         }

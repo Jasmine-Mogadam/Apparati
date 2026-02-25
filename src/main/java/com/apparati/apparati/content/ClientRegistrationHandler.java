@@ -2,6 +2,8 @@ package com.apparati.apparati.content;
 
 import com.apparati.apparati.Constants;
 import com.apparati.apparati.content.client.ApparatiRenderer;
+import com.apparati.apparati.content.client.ApparatiItemRenderer;
+import com.apparati.apparati.content.client.ApparatiPartItemRenderer;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
@@ -32,11 +34,11 @@ public class ClientRegistrationHandler {
                 
                 // Assign TEISR here, where we know client systems are ready
                 if (item instanceof ApparatiPartItem) {
-                    ApparatiPartItem part = (ApparatiPartItem) item;
-                    if (part.getPartType() != ApparatiPartItem.PartType.CORE) {
-                        System.out.println("Apparati: Setting TEISR for " + item.getRegistryName());
-                        item.setTileEntityItemStackRenderer(com.apparati.apparati.content.client.ApparatiPartItemRenderer.INSTANCE);
-                    }
+                    System.out.println("Apparati: Setting TEISR for " + item.getRegistryName());
+                    item.setTileEntityItemStackRenderer(ApparatiPartItemRenderer.INSTANCE);
+                } else if (item instanceof ApparatiItem) {
+                    System.out.println("Apparati: Setting TEISR for " + item.getRegistryName());
+                    item.setTileEntityItemStackRenderer(ApparatiItemRenderer.INSTANCE);
                 }
             }
         }

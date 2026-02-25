@@ -67,7 +67,18 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
         this.inventory.addInventoryChangeListener(inv -> {
              // Sync Core Slot (Slot 0) to DataParameter
              ItemStack core = inv.getStackInSlot(0);
+             boolean hadCore = hasCore();
              this.dataManager.set(CORE_STACK, core);
+             boolean hasCore = hasCore();
+             
+             if (hadCore && !hasCore) {
+                 // Core removed, force deactivate animation immediately
+                 // We can't access the controller directly easily from here server-side, 
+                 // but the state change should propagate.
+                 // We can try to force a stop of other AI tasks.
+                 this.getNavigator().clearPath();
+                 this.setAttackTarget(null);
+             }
         });
     }
     
@@ -304,28 +315,46 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
 
     private void tickChassisStats() {
         int chassisIndex = this.dataManager.get(CHASSIS_TYPE);
-        if (chassisIndex < 0 || chassisIndex >= ApparatiPartItem.PartType.values().length) return;
-        ApparatiPartItem.PartType chassis = ApparatiPartItem.PartType.values()[chassisIndex];
-
+        int treadsIndex = this.dataManager.get(TREADS_TYPE);
+        
         double speedMod = 0;
         double healthMod = 0;
 
-        switch (chassis) {
-            case CHASSIS_HOLLOW:
-                speedMod = 0.1D;
-                healthMod = -5.0D;
-                break;
-            case CHASSIS_CHEST:
-                speedMod = 0.0D;
-                healthMod = 0.0D;
-                // Should have more inventory space
-                break;
-            case CHASSIS_SOLID:
-                speedMod = -0.05D;
-                healthMod = 10.0D;
-                break;
-            default:
-                break;
+        if (chassisIndex >= 0 && chassisIndex < ApparatiPartItem.PartType.values().length) {
+            ApparatiPartItem.PartType chassis = ApparatiPartItem.PartType.values()[chassisIndex];
+            switch (chassis) {
+                case CHASSIS_HOLLOW:
+                    speedMod = 0.1D;
+                    healthMod = -5.0D;
+                    break;
+                case CHASSIS_CHEST:
+                    speedMod = 0.0D;
+                    healthMod = 0.0D;
+                    // Should have more inventory space
+                    break;
+                case CHASSIS_SOLID:
+                    speedMod = -0.05D;
+                    healthMod = 10.0D;
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        if (treadsIndex >= 0 && treadsIndex < ApparatiPartItem.PartType.values().length) {
+            ApparatiPartItem.PartType treads = ApparatiPartItem.PartType.values()[treadsIndex];
+            if (treads == ApparatiPartItem.PartType.TREADS_HOVER) {
+                speedMod -= 0.5D; // Lower speed by half (base is 0.25, so this might make it negative? let's assume factor or large penalty)
+                // Actually base is 0.25. Let's set the base value directly or use a multiplier.
+                // Simplified approach for this task: Set base value in update if changed
+                this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.125D); // Half of 0.25
+                this.fallDistance = 0; // No fall damage
+                if (!this.onGround && this.motionY < 0) {
+                    this.motionY *= 0.6D; // Slow fall / hover effect
+                }
+            } else {
+                this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.25D); // Reset to default
+            }
         }
 
         // Apply modifiers dynamically if changed (omitted for brevity, would need AttributeModifier)
@@ -343,7 +372,15 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
             return PlayState.CONTINUE;
         }
 
-        if (event.isMoving()) {
+        int treadsIndex = this.dataManager.get(TREADS_TYPE);
+        boolean isHovering = false;
+        if (treadsIndex >= 0 && treadsIndex < ApparatiPartItem.PartType.values().length) {
+             if (ApparatiPartItem.PartType.values()[treadsIndex] == ApparatiPartItem.PartType.TREADS_HOVER) {
+                 isHovering = true;
+             }
+        }
+
+        if (event.isMoving() || (isHovering && !this.onGround)) {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("walk", true));
         } else {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", true));
@@ -407,6 +444,37 @@ public class ApparatiEntity extends EntityCreature implements IAnimatable {
              return true;
         }
         return super.processInteract(player, hand);
+    }
+
+    public ItemStack packageToItem() {
+        ItemStack stack = new ItemStack(ModItems.APPARATI);
+        NBTTagCompound tag = new NBTTagCompound();
+
+        tag.setInteger("HeadType", this.dataManager.get(HEAD_TYPE));
+        tag.setInteger("ArmLeftType", this.dataManager.get(ARM_LEFT_TYPE));
+        tag.setInteger("ArmRightType", this.dataManager.get(ARM_RIGHT_TYPE));
+        tag.setInteger("ChassisType", this.dataManager.get(CHASSIS_TYPE));
+        tag.setInteger("TreadsType", this.dataManager.get(TREADS_TYPE));
+
+        tag.setString("HeadMaterial", this.dataManager.get(HEAD_MATERIAL));
+        tag.setString("ArmLeftMaterial", this.dataManager.get(ARM_LEFT_MATERIAL));
+        tag.setString("ArmRightMaterial", this.dataManager.get(ARM_RIGHT_MATERIAL));
+        tag.setString("ChassisMaterial", this.dataManager.get(CHASSIS_MATERIAL));
+        tag.setString("TreadsMaterial", this.dataManager.get(TREADS_MATERIAL));
+
+        tag.setFloat("Health", this.getHealth());
+
+        // Drop Inventory Items
+        for (int i = 0; i < this.inventory.getSizeInventory(); ++i) {
+            ItemStack item = this.inventory.getStackInSlot(i);
+            if (!item.isEmpty()) {
+                this.entityDropItem(item, 0.0F);
+                this.inventory.setInventorySlotContents(i, ItemStack.EMPTY);
+            }
+        }
+
+        stack.setTagCompound(tag);
+        return stack;
     }
 
     @Override

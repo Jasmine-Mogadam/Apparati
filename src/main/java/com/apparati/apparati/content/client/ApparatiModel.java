@@ -5,49 +5,41 @@ import com.apparati.apparati.content.ApparatiPartItem;
 import net.minecraft.util.ResourceLocation;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.processor.IBone;
-import software.bernie.geckolib3.model.AnimatedGeoModel;
 import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
-import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
+public class ApparatiModel extends ApparatiGenericModel<ApparatiEntity> {
     @Override
     public ResourceLocation getModelLocation(ApparatiEntity object) {
         return new ResourceLocation("apparati", "geo/apparati.geo.json");
     }
 
     @Override
-    public ResourceLocation getTextureLocation(@Nullable ApparatiEntity object) {
-        // Return the block texture map as we will be using sprites
-        return net.minecraft.client.renderer.texture.TextureMap.LOCATION_BLOCKS_TEXTURE;
-    }
-
-    @Override
-    public ResourceLocation getAnimationFileLocation(ApparatiEntity animatable) {
-        return new ResourceLocation("apparati", "animations/apparati.animation.json");
-    }
-
-    @Override
     public void setLivingAnimations(ApparatiEntity entity, Integer uniqueID, AnimationEvent customPredicate) {
         super.setLivingAnimations(entity, uniqueID, customPredicate);
 
-        // Hide all part-specific bones first
+        Set<String> visibleBones = new HashSet<>();
+
+        // Add visible bones based on active parts
+        addVisibleBones(visibleBones, entity.getDataManager().get(ApparatiEntity.HEAD_TYPE));
+        addVisibleBones(visibleBones, entity.getDataManager().get(ApparatiEntity.CHASSIS_TYPE));
+        addVisibleBones(visibleBones, entity.getDataManager().get(ApparatiEntity.TREADS_TYPE));
+
+        // Handle arms with side-specific filtering
+        addVisibleArmBones(visibleBones, entity.getDataManager().get(ApparatiEntity.ARM_LEFT_TYPE), "_left");
+        addVisibleArmBones(visibleBones, entity.getDataManager().get(ApparatiEntity.ARM_RIGHT_TYPE), "_right");
+
+        // Apply visibility to all known part bones
         for (ApparatiPartItem.PartType type : ApparatiPartItem.PartType.values()) {
             if (type.getBones() != null) {
                 for (String boneName : type.getBones()) {
-                    setBoneVisible(boneName, false);
+                    setBoneVisible(boneName, visibleBones.contains(boneName));
                 }
             }
         }
-
-        // Show bones for the current parts
-        showBonesFor(entity.getDataManager().get(ApparatiEntity.HEAD_TYPE));
-        showBonesFor(entity.getDataManager().get(ApparatiEntity.CHASSIS_TYPE));
-        showBonesFor(entity.getDataManager().get(ApparatiEntity.TREADS_TYPE));
-
-        // Handle arms individually to support left/right bone filtering
-        showArmBones(entity.getDataManager().get(ApparatiEntity.ARM_LEFT_TYPE), "_left");
-        showArmBones(entity.getDataManager().get(ApparatiEntity.ARM_RIGHT_TYPE), "_right");
 
         // Head and neck look-at logic
         EntityModelData extraData = (EntityModelData) customPredicate.getExtraDataOfType(EntityModelData.class).get(0);
@@ -63,32 +55,23 @@ public class ApparatiModel extends AnimatedGeoModel<ApparatiEntity> {
         }
     }
 
-    private void showBonesFor(int partTypeIndex) {
+    private void addVisibleBones(Set<String> visibleBones, int partTypeIndex) {
         if (partTypeIndex < 0 || partTypeIndex >= ApparatiPartItem.PartType.values().length) return;
         ApparatiPartItem.PartType type = ApparatiPartItem.PartType.values()[partTypeIndex];
         if (type.getBones() != null) {
-            for (String boneName : type.getBones()) {
-                setBoneVisible(boneName, true);
-            }
+            Collections.addAll(visibleBones, type.getBones());
         }
     }
 
-    private void showArmBones(int partTypeIndex, String sideSuffix) {
+    private void addVisibleArmBones(Set<String> visibleBones, int partTypeIndex, String sideSuffix) {
         if (partTypeIndex < 0 || partTypeIndex >= ApparatiPartItem.PartType.values().length) return;
         ApparatiPartItem.PartType type = ApparatiPartItem.PartType.values()[partTypeIndex];
         if (type.getBones() != null) {
             for (String boneName : type.getBones()) {
                 if (boneName.endsWith(sideSuffix)) {
-                    setBoneVisible(boneName, true);
+                    visibleBones.add(boneName);
                 }
             }
-        }
-    }
-
-    private void setBoneVisible(String name, boolean visible) {
-        IBone bone = this.getAnimationProcessor().getBone(name);
-        if (bone != null) {
-            bone.setHidden(!visible);
         }
     }
 }

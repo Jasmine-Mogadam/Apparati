@@ -1,0 +1,22 @@
+{
+  "type": "apparati:assembler_shaped",
+  "block_char": "B",
+  "pattern": ["BBB", " B ", " F "],
+  "key": {
+    "B": {
+      "type": "forge:ore_dict",
+      "ore": "apparati:block"
+    },
+    "F": [
+      {
+        "item": "minecraft:fireworks"
+      },
+      {
+        "item": "minecraft:firework_charge"
+      }
+    ]
+  },
+  "result": {
+    "item": "apparati:treads_hover"
+  }
+}

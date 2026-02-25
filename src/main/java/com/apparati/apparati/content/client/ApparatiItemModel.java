@@ -41,7 +41,7 @@ public class ApparatiItemModel extends AnimatedGeoModel<ApparatiPartItemRenderer
         "whole", "body", "neck", "head", "camera", "lid", "antennae", "flare", 
         "microphone", "waffle rings", "chassis", "hollow", "chest", "solid", 
         "arm_left", "holder_left", "placer_left", "arm_right", "placer_right", 
-        "holder_right", "treads", "wheelie"
+        "holder_right", "treads", "wheelie", "hover"
     };
 
     @Override
@@ -74,35 +74,26 @@ public class ApparatiItemModel extends AnimatedGeoModel<ApparatiPartItemRenderer
 
     private void enableHierarchyForPart(ApparatiPartItem.PartType partType) {
         // Logic to enable parent bones based on where the part attaches
-        switch (partType) {
-            case HEAD_CAMERA_LENS:
-            case HEAD_MICROPHONE:
-            case HEAD_REDSTONE_ANTENNAE:
+        switch (partType.getCategory()) {
+            case HEAD:
                 // Attached to Head -> Neck -> Body
                 setBoneVisible("body", true);
                 setBoneVisible("neck", true);
                 setBoneVisible("head", true);
                 break;
-            case ARM_HOLDER:
-            case ARM_PLACER:
+            case ARM:
                 // Only show left arm for generic item representation
                 setBoneVisible("body", true);
                 setBoneVisible("arm_left", true);
                 break;
-            case CHASSIS_HOLLOW:
-            case CHASSIS_CHEST:
-            case CHASSIS_SOLID:
+            case CHASSIS:
                 // Attached to Chassis -> Body
                 setBoneVisible("body", true);
                 setBoneVisible("chassis", true);
                 break;
-            case TREADS_WHEELIE:
+            case TREADS:
                 // Attached to Treads -> Whole
                 setBoneVisible("treads", true);
-                break;
-            case CORE:
-                // Core usually implies body?
-                setBoneVisible("body", true);
                 break;
         }
     }

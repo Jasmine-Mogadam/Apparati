@@ -34,6 +34,7 @@ public class ApparatiMod {
         LOGGER.info("Initializing {}...", Tags.MOD_NAME);
         software.bernie.geckolib3.GeckoLib.initialize();
         net.minecraftforge.fml.common.network.NetworkRegistry.INSTANCE.registerGuiHandler(this, new com.apparati.apparati.content.GuiHandler());
+        com.apparati.apparati.network.ApparatiNetwork.init();
 
         if (event.getSide().isClient()) {
             MinecraftForge.EVENT_BUS.register(com.apparati.apparati.content.ClientRegistrationHandler.class);

@@ -58,8 +58,7 @@ public class ApparatiAssemblerRecipeWrapper implements IRecipeWrapper {
             boolean isBlockPlaceholder = (placeholder != null && ingredient == placeholder);
             
             // Check if the recipe result is a core - if so, don't use arbitrary block materials
-            if (recipe.getRecipeOutput().getItem() instanceof ApparatiPartItem && 
-                ((ApparatiPartItem)recipe.getRecipeOutput().getItem()).getPartType() == ApparatiPartItem.PartType.CORE) {
+            if (recipe.getRecipeOutput().getItem() == com.apparati.apparati.content.ModItems.CORE) {
                 isBlockPlaceholder = false;
             }
 

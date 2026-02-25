@@ -33,11 +33,11 @@ public class GuiApparatiAssembler extends GuiContainer {
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
         te.setActiveTab(button.id);
-        // We'd need a packet to sync tab change to server, then server updates container slots
-        // For now, let's assume TE sync handles it or we'll add the packet later.
+        com.apparati.apparati.network.ApparatiNetwork.INSTANCE.sendToServer(new com.apparati.apparati.network.PacketApparatiTab(button.id));
         
-        // Re-init to update slots (this is a bit hacky but works for demo)
-        this.mc.player.openGui(com.apparati.apparati.ApparatiMod.instance, 0, te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ());
+        if (this.inventorySlots instanceof ContainerApparatiAssembler) {
+            ((ContainerApparatiAssembler) this.inventorySlots).updateSlots();
+        }
     }
 
     @Override
@@ -89,8 +89,10 @@ public class GuiApparatiAssembler extends GuiContainer {
             }
             if (hasItems) {
                 te.setActiveTab(0);
-                // Re-init to update slots
-                this.mc.player.openGui(com.apparati.apparati.ApparatiMod.instance, 0, te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ());
+                com.apparati.apparati.network.ApparatiNetwork.INSTANCE.sendToServer(new com.apparati.apparati.network.PacketApparatiTab(0));
+                if (this.inventorySlots instanceof ContainerApparatiAssembler) {
+                    ((ContainerApparatiAssembler) this.inventorySlots).updateSlots();
+                }
             }
         }
         
@@ -103,8 +105,10 @@ public class GuiApparatiAssembler extends GuiContainer {
     public void onJEIAutofill() {
         if (te.getActiveTab() != 0) {
             te.setActiveTab(0);
-            // Re-init to update slots
-            this.mc.player.openGui(com.apparati.apparati.ApparatiMod.instance, 0, te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ());
+            com.apparati.apparati.network.ApparatiNetwork.INSTANCE.sendToServer(new com.apparati.apparati.network.PacketApparatiTab(0));
+            if (this.inventorySlots instanceof ContainerApparatiAssembler) {
+                ((ContainerApparatiAssembler) this.inventorySlots).updateSlots();
+            }
         }
     }
 }

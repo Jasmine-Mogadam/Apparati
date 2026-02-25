@@ -3,10 +3,12 @@ package com.apparati.apparati.content;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder;
 import com.apparati.apparati.Constants;
+import net.minecraft.item.Item;
 
 @ObjectHolder(Constants.MOD_ID)
 public class ModItems {
-    public static final ApparatiPartItem CORE = null;
+    public static final ApparatiItem APPARATI = null;
+    public static final Item CORE = null;
     public static final ApparatiPartItem HEAD_REDSTONE_ANTENNAE = null;
     public static final ApparatiPartItem HEAD_CAMERA_LENS = null;
     public static final ApparatiPartItem HEAD_MICROPHONE = null;
@@ -16,4 +18,5 @@ public class ModItems {
     public static final ApparatiPartItem CHASSIS_CHEST = null;
     public static final ApparatiPartItem CHASSIS_SOLID = null;
     public static final ApparatiPartItem TREADS_WHEELIE = null;
+    public static final ApparatiPartItem TREADS_HOVER = null;
 }

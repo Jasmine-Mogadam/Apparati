@@ -20,11 +20,11 @@ public class ContainerApparatiInventory extends Container {
         this.numRows = (apparatiInventory.getSizeInventory() - 1 + 4) / 5; // -1 for Core, 5 cols
         apparatiInventory.openInventory(player);
 
-        // Core Slot (Slot 0) - Moved up 3 pixels and left 1 pixel (9,59 -> 8,56)
-        this.addSlotToContainer(new Slot(apparatiInventory, 0, 8, 56) {
+        // Core Slot (Slot 0)
+        this.addSlotToContainer(new Slot(apparatiInventory, 0, 8, 54) {
             @Override
             public boolean isItemValid(ItemStack stack) {
-                return stack.getItem() instanceof ApparatiPartItem && ((ApparatiPartItem) stack.getItem()).getPartType() == ApparatiPartItem.PartType.CORE;
+                return stack.getItem() == ModItems.CORE;
             }
         });
 
@@ -35,7 +35,6 @@ public class ContainerApparatiInventory extends Container {
         }
 
         // Player Inventory - Standard offsets
-        // Moved up one slot (102 -> 84)
         int playerInvY = 84;
         
         for (int m = 0; m < 3; ++m) {
@@ -73,8 +72,8 @@ public class ContainerApparatiInventory extends Container {
                     
                     if (j < visibleRows) {
                         // Visible
-                        slot.xPos = 80 + k * 18; // X start 80
-                        slot.yPos = 18 + j * 18; // Y start 18 (Moved down 2 pixels)
+                        slot.xPos = 80 + k * 18;
+                        slot.yPos = 18 + j * 18;
                     } else {
                         // Hidden
                         slot.xPos = -10000;

@@ -213,6 +213,16 @@ processResources {
         rename '(.+_at.cfg)', 'META-INF/$1'
     }
 
+    doLast {
+        copy {
+            from "${projectDir}/src/main/resources/assets/apparati/geo/apparati.geo.json"
+            into "${sourceSets.main.output.resourcesDir}/assets/apparati/geo"
+            rename { String fileName ->
+                fileName.replace("apparati.geo.json", "apparati_item.geo.json")
+            }
+        }
+    }
+
 }
 
 jar {

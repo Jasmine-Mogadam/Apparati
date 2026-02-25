@@ -2,17 +2,19 @@ package com.apparati.apparati.content;
 
 import com.apparati.apparati.Constants;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
+import java.util.List;
 
 public class GuiApparatiAssembler extends GuiContainer {
-    private static final ResourceLocation BG_TEXTURE = new ResourceLocation("apparati", "textures/gui/assembler.png");
+    private static final ResourceLocation CRAFTING_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
+    private static final ResourceLocation ASSEMBLER_TEXTURE = new ResourceLocation("apparati", "textures/gui/assembler.png");
+
     private final TileEntityApparatiAssembler te;
+    private GuiApparatiCoreTab coreTab;
 
     public GuiApparatiAssembler(ContainerApparatiAssembler container, TileEntityApparatiAssembler te) {
         super(container);
@@ -28,6 +30,8 @@ public class GuiApparatiAssembler extends GuiContainer {
         this.buttonList.add(new GuiButton(0, guiLeft - 20, guiTop + 10, 20, 20, "C"));
         this.buttonList.add(new GuiButton(1, guiLeft - 20, guiTop + 35, 20, 20, "A"));
         this.buttonList.add(new GuiButton(2, guiLeft - 20, guiTop + 60, 20, 20, "P"));
+        
+        this.coreTab = new GuiApparatiCoreTab(this, te);
     }
 
     @Override
@@ -45,10 +49,11 @@ public class GuiApparatiAssembler extends GuiContainer {
         this.drawDefaultBackground();
         super.drawScreen(mouseX, mouseY, partialTicks);
         this.renderHoveredToolTip(mouseX, mouseY);
+        
+        if (te.getActiveTab() == 2 && coreTab != null) {
+            coreTab.drawTooltips(mouseX, mouseY, guiLeft, guiTop);
+        }
     }
-
-    private static final ResourceLocation CRAFTING_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
-    private static final ResourceLocation ASSEMBLER_TEXTURE = new ResourceLocation("apparati", "textures/gui/assembler.png");
 
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
@@ -56,21 +61,39 @@ public class GuiApparatiAssembler extends GuiContainer {
         
         if (te.getActiveTab() == 0) {
             this.mc.getTextureManager().bindTexture(CRAFTING_TEXTURE);
+            int i = (this.width - this.xSize) / 2;
+            int j = (this.height - this.ySize) / 2;
+            this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+        } else if (te.getActiveTab() == 2 && coreTab != null) {
+            int i = (this.width - this.xSize) / 2;
+            int j = (this.height - this.ySize) / 2;
+            coreTab.drawBackground(i, j, this.xSize, this.ySize, mouseX, mouseY);
         } else {
             this.mc.getTextureManager().bindTexture(ASSEMBLER_TEXTURE);
+            int i = (this.width - this.xSize) / 2;
+            int j = (this.height - this.ySize) / 2;
+            this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
         }
+    }
 
-        int i = (this.width - this.xSize) / 2;
-        int j = (this.height - this.ySize) / 2;
-        this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        if (te.getActiveTab() == 2 && coreTab != null) {
+            if (coreTab.handleMouseClick(mouseX, mouseY, mouseButton)) {
+                return;
+            }
+        }
+        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     // Custom JEI handling to switch tab on + click
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        // Intercept JEI '+' click which usually sends a key or mouse event
-        // In 1.12 JEI, the '+' button click area is often handled by JEI itself,
-        // but we can try to detect if we're on the wrong tab when the GUI loses focus or updates.
+        if (te.getActiveTab() == 2 && coreTab != null) {
+            if (coreTab.handleKeyInput(typedChar, keyCode)) {
+                return;
+            }
+        }
         super.keyTyped(typedChar, keyCode);
     }
 
@@ -78,7 +101,6 @@ public class GuiApparatiAssembler extends GuiContainer {
     public void updateScreen() {
         super.updateScreen();
         // Check if there are items in the crafting matrix while NOT on the crafting tab
-        // This is a sign that JEI just autofilled (since JEI bypasses tab restrictions on the container level if slots are just moved)
         if (te.getActiveTab() != 0) {
             boolean hasItems = false;
             for (int i = 0; i < te.craftingInv.getSlots(); i++) {
@@ -101,7 +123,7 @@ public class GuiApparatiAssembler extends GuiContainer {
             ((ContainerApparatiAssembler)this.inventorySlots).onCraftMatrixChanged();
         }
     }
-
+    
     public void onJEIAutofill() {
         if (te.getActiveTab() != 0) {
             te.setActiveTab(0);
@@ -110,5 +132,18 @@ public class GuiApparatiAssembler extends GuiContainer {
                 ((ContainerApparatiAssembler) this.inventorySlots).updateSlots();
             }
         }
+    }
+    
+    // Expose helpers for CoreTab
+    public net.minecraft.client.gui.FontRenderer getFontRenderer() {
+        return this.fontRenderer;
+    }
+    
+    public int getGuiLeft() {
+        return this.guiLeft;
+    }
+    
+    public int getGuiTop() {
+        return this.guiTop;
     }
 }

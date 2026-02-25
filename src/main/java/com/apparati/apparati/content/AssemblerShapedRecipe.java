@@ -164,8 +164,8 @@ public class AssemblerShapedRecipe extends IForgeRegistryEntry.Impl<IRecipe> imp
                     int tier = 0;
                     if (material.equals("minecraft:iron_ingot")) tier = 1;
                     else if (material.equals("minecraft:gold_ingot")) tier = 2;
-                    else if (material.equals("minecraft:diamond")) tier = 3;
-                    else if (material.equals("minecraft:netherite_ingot")) tier = 4;
+                    else if (material.equals("minecraft:emerald")) tier = 3;
+                    else if (material.equals("minecraft:diamond")) tier = 4;
                     
                     if (tier > 0) {
                         tag.setInteger("Tier", tier);

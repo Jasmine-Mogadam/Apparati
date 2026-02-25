@@ -11,5 +11,7 @@ public class ApparatiNetwork {
     public static void init() {
         INSTANCE.registerMessage(PacketPackageApparati.Handler.class, PacketPackageApparati.class, 0, Side.SERVER);
         INSTANCE.registerMessage(PacketApparatiTab.Handler.class, PacketApparatiTab.class, 1, Side.SERVER);
+        INSTANCE.registerMessage(PacketUpdateCore.Handler.class, PacketUpdateCore.class, 2, Side.SERVER);
+        INSTANCE.registerMessage(PacketCopyCore.Handler.class, PacketCopyCore.class, 3, Side.SERVER);
     }
 }

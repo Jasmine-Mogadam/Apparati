@@ -81,7 +81,7 @@ public class ContainerApparatiAssembler extends Container {
         });
 
         // Programming Slot: 15
-        this.addSlotToContainer(new SlotItemHandler(te.programmingInv, 0, activeTab == 2 ? 80 : -1000, 35) {
+        this.addSlotToContainer(new SlotItemHandler(te.programmingInv, 0, activeTab == 2 ? 8 : -1000, 8) {
             @Override
             public boolean isItemValid(ItemStack stack) {
                 return stack.getItem() == ModItems.CORE;
@@ -114,7 +114,8 @@ public class ContainerApparatiAssembler extends Container {
         this.inventorySlots.get(14).xPos = activeTab == 1 ? 66 : -1000; // Arm R
 
         // Programming Slot: 15
-        this.inventorySlots.get(15).xPos = activeTab == 2 ? 80 : -1000;
+        this.inventorySlots.get(15).xPos = activeTab == 2 ? 8 : -1000;
+        this.inventorySlots.get(15).yPos = activeTab == 2 ? 8 : -1000;
 
         // Recalculate recipes/assembly if needed
         if (activeTab == 0) onCraftMatrixChanged();
